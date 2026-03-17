@@ -3,6 +3,7 @@
 import os
 import subprocess
 
+import pandas as pd
 from dagster import AssetExecutionContext, Output, asset
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
@@ -111,20 +112,105 @@ def data_validation(context: AssetExecutionContext) -> Output:
     return Output(value={"status": "validation_passed"}, metadata={"output": output})
 
 
-# ─── ML (downstream, placeholder) ───────────────────────────────────────────
+# ─── ML ──────────────────────────────────────────────────────────────────────
 
-@asset(group_name="ml", deps=[dbt_marts], description="Generate demand forecasts")
+@asset(group_name="ml", deps=[dbt_marts], description="Train demand forecast models")
+def demand_forecast_train(context: AssetExecutionContext) -> Output:
+    """Train demand forecast models with cross-validation and model selection."""
+    import sys
+    sys.path.insert(0, PROJECT_ROOT)
+
+    from ml.forecasting.config import ForecastConfig
+    from ml.forecasting.train import run_training_pipeline
+
+    config = ForecastConfig(db_path=os.path.join(DATA_DIR, "dev.duckdb"))
+    result = run_training_pipeline(config)
+
+    n_forecasts = len(result.get("forecasts", []))
+    best_model = "N/A"
+    best_wmape = -1
+    report = result.get("report", {})
+    if report.get("model_ranking"):
+        best_model = report["model_ranking"][0]["model"]
+        best_wmape = report["model_ranking"][0].get("wmape", -1)
+
+    context.log.info(f"Training complete: {n_forecasts} forecasts, "
+                     f"best model={best_model}, WMAPE={best_wmape:.4f}")
+
+    return Output(
+        value={"status": result.get("status"), "best_model": best_model},
+        metadata={
+            "best_model": best_model,
+            "best_wmape": best_wmape,
+            "n_series": int(result.get("forecasts", pd.DataFrame()).get("unique_id", pd.Series()).nunique())
+            if isinstance(result.get("forecasts"), pd.DataFrame) else 0,
+        },
+    )
+
+
+@asset(group_name="ml", deps=[demand_forecast_train], description="Generate batch demand forecasts")
 def demand_forecast(context: AssetExecutionContext) -> Output:
-    """Generate demand forecasts at SKU x Store x Week."""
-    # TODO: Wire to ml/forecasting pipeline
-    context.log.info("Demand forecast placeholder — wire to ml/forecasting/baseline.py")
-    return Output(value={"status": "placeholder", "forecasts_generated": 0})
+    """Run batch inference to generate demand forecasts for all active SKU×Store."""
+    import sys
+    sys.path.insert(0, PROJECT_ROOT)
+
+    from ml.forecasting.config import ForecastConfig
+    from ml.forecasting.predict import run_inference_pipeline
+
+    config = ForecastConfig(db_path=os.path.join(DATA_DIR, "dev.duckdb"))
+    forecasts = run_inference_pipeline(config, write_to_db=True)
+
+    n_forecasts = len(forecasts)
+    n_stores = int(forecasts["store_id"].nunique()) if not forecasts.empty else 0
+    n_skus = int(forecasts["sku_id"].nunique()) if not forecasts.empty else 0
+
+    context.log.info(f"Inference complete: {n_forecasts} forecasts, "
+                     f"{n_stores} stores, {n_skus} SKUs")
+
+    return Output(
+        value={"status": "success", "forecasts_generated": n_forecasts},
+        metadata={
+            "n_forecasts": n_forecasts,
+            "n_stores": n_stores,
+            "n_skus": n_skus,
+        },
+    )
+
+
+@asset(group_name="ml", deps=[dbt_marts], description="Materialize features to Feast offline store")
+def feature_materialization(context: AssetExecutionContext) -> Output:
+    """Materialize demand and inventory features for the feature store."""
+    import sys
+    sys.path.insert(0, PROJECT_ROOT)
+
+    from ml.forecasting.config import ForecastConfig
+    from ml.forecasting.data_loader import load_demand_data, load_inventory_data
+    from ml.forecasting.feature_store import materialize_features
+    from ml.forecasting.features import generate_all_features
+
+    config = ForecastConfig(db_path=os.path.join(DATA_DIR, "dev.duckdb"))
+    demand_df = load_demand_data(config)
+    features_df = generate_all_features(demand_df, config)
+    inventory_df = load_inventory_data(config)
+
+    materialize_features(
+        demand_df=features_df,
+        inventory_df=inventory_df,
+        output_dir=os.path.join(DATA_DIR, "features"),
+    )
+
+    context.log.info(f"Materialized {len(features_df)} demand feature rows, "
+                     f"{len(inventory_df)} inventory rows")
+    return Output(
+        value={"status": "materialized"},
+        metadata={"demand_rows": len(features_df), "inventory_rows": len(inventory_df)},
+    )
 
 
 @asset(group_name="ml", deps=[dbt_marts], description="Update store cluster assignments")
 def store_clustering(context: AssetExecutionContext) -> Output:
     """Update store cluster assignments based on recent behavior."""
-    # TODO: Wire to ml/features clustering
+    # TODO: Wire to ml/features clustering (v2)
     context.log.info("Store clustering placeholder — wire to ml/features/store_features.py")
     return Output(value={"status": "placeholder", "clusters": 0})
 

@@ -33,7 +33,9 @@ daily_batch_job = define_asset_job(
         "dbt_marts",
         "dbt_tests",
         "data_validation",
+        "demand_forecast_train",
         "demand_forecast",
+        "feature_materialization",
         "replenishment_plan",
         "transfer_plan",
     ],
@@ -47,11 +49,24 @@ weekly_forecast_job = define_asset_job(
         "dbt_dimensions",
         "dbt_intermediate",
         "dbt_marts",
+        "demand_forecast_train",
         "demand_forecast",
+        "feature_materialization",
         "store_clustering",
         "assortment_plan",
         "replenishment_plan",
         "transfer_plan",
         "purchase_order_suggestions",
+    ],
+)
+
+# Training-only job (for model development / retraining)
+forecast_training_job = define_asset_job(
+    name="forecast_training_job",
+    description="Train and evaluate demand forecast models",
+    selection=[
+        "demand_forecast_train",
+        "demand_forecast",
+        "feature_materialization",
     ],
 )

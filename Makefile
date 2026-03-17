@@ -1,4 +1,4 @@
-.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline
+.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data test-integration generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline forecast-train forecast-predict forecast-evaluate
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -28,6 +28,9 @@ test-smoke: ## Run smoke tests (API + data)
 
 test-data: ## Run data foundation tests (generate → dbt → validate)
 	pytest tests/smoke/test_data_foundation.py -v
+
+test-integration: ## Run integration tests (requires data foundation)
+	pytest tests/integration -v -m integration
 
 # ─── Data Foundation ─────────────────────────────────────────────────────────
 
@@ -68,6 +71,17 @@ docker-down: ## Stop infrastructure
 
 dagster-dev: ## Start Dagster dev UI
 	dagster dev -m orchestration.dagster.lenskart_dagster.definitions
+
+# ─── Forecasting ────────────────────────────────────────────────────────────
+
+forecast-train: ## Train demand forecast models (requires data foundation)
+	python -m ml.forecasting.train
+
+forecast-predict: ## Run batch forecast inference
+	python -m ml.forecasting.predict
+
+forecast-evaluate: ## Evaluate forecast model quality
+	python -m ml.forecasting.evaluate --output data/eval_report.json
 
 # ─── Cleanup ─────────────────────────────────────────────────────────────────
 
