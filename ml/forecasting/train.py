@@ -75,26 +75,39 @@ def run_training_pipeline(config: ForecastConfig) -> dict:
     models = get_production_models(config)
     cv_results = cross_validate(sf_df, config, models)
 
-    # Step 5: Evaluate
-    logger.info("Step 5: Evaluating models")
-    model_columns = [c for c in cv_results.columns
-                     if c not in ("unique_id", "ds", "y", "cutoff")]
+    if cv_results.empty:
+        logger.warning("Cross-validation returned no results, proceeding with direct forecast")
+        logger.info("Step 5-6: Skipping model selection (no CV), using ensemble")
+        selection = None
+        report = {"status": "skipped", "reason": "no CV results"}
+        model_columns = None
+    else:
+        # Step 5: Evaluate
+        logger.info("Step 5: Evaluating models")
+        model_columns = [c for c in cv_results.columns
+                         if c not in ("unique_id", "ds", "y", "cutoff")]
 
-    # Build dimension mapping for breakdowns
-    dim_df = demand_df[["store_id", "sku_id", "store_cluster", "category",
-                         "sku_type", "lifecycle_stage"]].drop_duplicates()
-    dim_df["unique_id"] = dim_df["store_id"] + "__" + dim_df["sku_id"]
+        # Build dimension mapping for breakdowns
+        dim_df = demand_df[["store_id", "sku_id", "store_cluster", "category",
+                             "sku_type", "lifecycle_stage"]].drop_duplicates()
+        dim_df["unique_id"] = dim_df["store_id"] + "__" + dim_df["sku_id"]
 
-    report = generate_evaluation_report(cv_results, model_columns, dim_df)
+        report = generate_evaluation_report(cv_results, model_columns, dim_df)
 
-    # Step 6: Model selection
-    logger.info("Step 6: Selecting best model per series")
-    selection = select_best_model(cv_results, model_columns)
+        # Step 6: Model selection
+        logger.info("Step 6: Selecting best model per series")
+        selection = select_best_model(cv_results, model_columns)
 
     # Step 7: Generate final forecasts with quantiles
     logger.info("Step 7: Generating final forecasts")
     forecasts = fit_and_forecast_with_quantiles(sf_df, config, models)
-    forecasts = create_ensemble_forecast(forecasts, model_columns)
+    if model_columns is not None:
+        forecasts = create_ensemble_forecast(forecasts, model_columns)
+    else:
+        # Infer model columns from forecast output
+        inferred_cols = [c for c in forecasts.columns
+                         if c not in ("unique_id", "ds") and not c.startswith(("lo-", "hi-"))]
+        forecasts = create_ensemble_forecast(forecasts, inferred_cols)
 
     # Step 8: Hierarchical reconciliation
     logger.info("Step 8: Hierarchical reconciliation")

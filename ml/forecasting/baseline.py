@@ -134,8 +134,27 @@ def cross_validate(
         n_jobs=-1,
     )
 
+    # Filter out series too short for cross-validation
+    # Minimum length: cv_h * cv_n_windows + cv_step_size * (cv_n_windows - 1)
+    min_cv_length = (
+        config.cv_h * config.cv_n_windows
+        + config.cv_step_size * (config.cv_n_windows - 1)
+        + 2  # buffer for expanding window
+    )
+    series_lengths = df.groupby("unique_id")["ds"].count()
+    valid_ids = series_lengths[series_lengths >= min_cv_length].index
+    df_cv = df[df["unique_id"].isin(valid_ids)]
+
+    if df_cv.empty:
+        logger.warning("No series long enough for cross-validation, skipping CV")
+        return pd.DataFrame()
+
+    dropped = len(series_lengths) - len(valid_ids)
+    if dropped > 0:
+        logger.info(f"Filtered {dropped} short series for CV (need {min_cv_length}+ weeks)")
+
     cv_results = sf.cross_validation(
-        df=df,
+        df=df_cv,
         h=config.cv_h,
         step_size=config.cv_step_size,
         n_windows=config.cv_n_windows,
