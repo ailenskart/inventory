@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from apps.api.app.routers import assortment, forecasts, health, purchase_orders, replenishment, transfers
+from apps.api.app.routers import assortment, forecasts, health, purchase_orders, replenishment, transfers, vendors
 
 app = FastAPI(
     title="Lenskart Retail Intelligence",
@@ -24,4 +24,5 @@ app.include_router(forecasts.router, prefix="/api/v1/forecasts", tags=["Forecast
 app.include_router(replenishment.router, prefix="/api/v1/replenishment", tags=["Replenishment"])
 app.include_router(assortment.router, prefix="/api/v1/assortment", tags=["Assortment"])
 app.include_router(transfers.router, prefix="/api/v1/transfers", tags=["Transfers"])
+app.include_router(vendors.router, prefix="/api/v1/vendors", tags=["Vendors"])
 app.include_router(purchase_orders.router, prefix="/api/v1/purchase-orders", tags=["Purchase Orders"])

@@ -152,6 +152,23 @@ class TestTransferEndpoints:
         assert data["transfers_initiated"] == 2
 
 
+class TestVendorEndpoints:
+    def test_scorecards_endpoint(self):
+        """GET /scorecards should return vendor list."""
+        response = client.get("/api/v1/vendors/scorecards")
+        assert response.status_code in (200, 503)
+
+    def test_scorecard_by_vendor(self):
+        """GET /scorecard/{id} returns 404 or scorecard."""
+        response = client.get("/api/v1/vendors/scorecard/VND001")
+        assert response.status_code in (200, 404, 503)
+
+    def test_vendor_portal(self):
+        """GET /portal/{id} returns 404 or portal payload."""
+        response = client.get("/api/v1/vendors/portal/VND001")
+        assert response.status_code in (200, 404, 503)
+
+
 class TestPurchaseOrderEndpoints:
     def test_list_pos(self):
         response = client.get("/api/v1/purchase-orders/")
@@ -170,3 +187,18 @@ class TestPurchaseOrderEndpoints:
     def test_get_suggestions(self):
         response = client.get("/api/v1/purchase-orders/suggestions")
         assert response.status_code == 200
+
+    def test_get_recommended(self):
+        response = client.get("/api/v1/purchase-orders/recommended")
+        assert response.status_code == 200
+        data = response.json()
+        assert "recommendations" in data
+        assert "count" in data
+
+    def test_generate_endpoint_exists(self):
+        """POST /generate should exist (may fail if DB not ready)."""
+        response = client.post(
+            "/api/v1/purchase-orders/generate",
+            json={"forecast_horizon_weeks": 12},
+        )
+        assert response.status_code in (200, 500, 503)
