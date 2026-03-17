@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lenskart Retail Intelligence</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+<style>
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --bg-card-hover: #334155;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent: #818cf8;
+    --accent-light: #a5b4fc;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #38bdf8;
+  }
+  * { font-family: 'Inter', sans-serif; }
+  body { background: var(--bg-primary); color: var(--text-primary); }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: all 0.2s; }
+  .card:hover { border-color: var(--accent); }
+  .sidebar-item { transition: all 0.15s; }
+  .sidebar-item:hover, .sidebar-item.active { background: rgba(129,140,248,0.15); color: var(--accent-light); }
+  .sidebar-item.active { border-right: 3px solid var(--accent); }
+  .badge { padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+  .badge-success { background: rgba(52,211,153,0.15); color: #34d399; }
+  .badge-warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .badge-danger { background: rgba(248,113,113,0.15); color: #f87171; }
+  .badge-info { background: rgba(56,189,248,0.15); color: #38bdf8; }
+  .badge-purple { background: rgba(129,140,248,0.15); color: #818cf8; }
+  .stat-card { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(129,140,248,0.05) 100%); }
+  .btn-primary { background: var(--accent); color: white; padding: 8px 20px; border-radius: 8px; font-weight: 500; transition: all 0.15s; }
+  .btn-primary:hover { background: var(--accent-light); }
+  .btn-outline { border: 1px solid var(--border); color: var(--text-secondary); padding: 8px 20px; border-radius: 8px; font-weight: 500; transition: all 0.15s; }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent-light); }
+  .table-row:hover { background: rgba(129,140,248,0.05); }
+  .shimmer { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  .tab-active { border-bottom: 2px solid var(--accent); color: var(--accent-light); }
+</style>
+</head>
+<body x-data="app()" x-init="init()">
+
+<!-- Sidebar -->
+<div class="fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-700 z-50 flex flex-col">
+  <!-- Logo -->
+  <div class="p-6 border-b border-gray-700">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+      </div>
+      <div>
+        <div class="font-bold text-white text-sm">Lenskart</div>
+        <div class="text-xs text-gray-400">Retail Intelligence</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-4 overflow-y-auto">
+    <div class="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Main</div>
+    <template x-for="item in navItems" :key="item.id">
+      <button
+        @click="currentPage = item.id; loadPage(item.id)"
+        :class="currentPage === item.id ? 'active' : ''"
+        class="sidebar-item w-full flex items-center gap-3 px-6 py-3 text-sm text-gray-300 cursor-pointer"
+      >
+        <span x-html="item.icon" class="w-5 h-5"></span>
+        <span x-text="item.label"></span>
+      </button>
+    </template>
+  </nav>
+
+  <!-- Status -->
+  <div class="p-4 border-t border-gray-700">
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <div class="pulse-dot" :class="apiHealthy ? 'bg-green-400' : 'bg-red-400'"></div>
+      <span x-text="apiHealthy ? 'System Online' : 'System Offline'"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="ml-64 min-h-screen">
+  <!-- Top Bar -->
+  <header class="sticky top-0 z-40 bg-gray-900 bg-opacity-80 backdrop-blur border-b border-gray-700 px-8 py-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold" x-text="navItems.find(n => n.id === currentPage)?.label || 'Dashboard'"></h1>
+        <p class="text-sm text-gray-400" x-text="navItems.find(n => n.id === currentPage)?.desc || ''"></p>
+      </div>
+      <div class="flex items-center gap-4">
+        <button @click="refreshAll()" class="btn-outline text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+        <div class="text-sm text-gray-400" x-text="new Date().toLocaleDateString('en-IN', {weekday:'short', month:'short', day:'numeric', year:'numeric'})"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading -->
+  <div x-show="loading" class="p-8">
+    <div class="grid grid-cols-4 gap-6 mb-8">
+      <template x-for="i in 4"><div class="shimmer h-28 rounded-xl"></div></template>
+    </div>
+    <div class="shimmer h-80 rounded-xl"></div>
+  </div>
+
+  <!-- Dashboard Page -->
+  <div x-show="!loading && currentPage === 'dashboard'" class="p-8">
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="card stat-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-gray-400">Forecasts Generated</span>
+          <div class="w-10 h-10 rounded-lg bg-indigo-500 bg-opacity-20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          </div>
+        </div>
+        <div class="text-3xl font-bold" x-text="ct?.forecast?.total_forecasts?.toLocaleString() || '—'"></div>
+        <div class="text-sm text-gray-400 mt-1"><span x-text="ct?.forecast?.stores_covered || 0"></span> stores, <span x-text="ct?.forecast?.skus_covered || 0"></span> SKUs</div>
+      </div>
+      <div class="card stat-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-gray-400">Stockout Risk</span>
+          <div class="w-10 h-10 rounded-lg bg-red-500 bg-opacity-20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+        </div>
+        <div class="text-3xl font-bold" x-text="((ct?.stockout_risk?.stockout_rate || 0) * 100).toFixed(1) + '%'"></div>
+        <div class="text-sm text-gray-400 mt-1"><span class="text-red-400" x-text="ct?.stockout_risk?.critical_count || 0"></span> critical, <span class="text-yellow-400" x-text="ct?.stockout_risk?.low_count || 0"></span> low stock</div>
+      </div>
+      <div class="card stat-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-gray-400">Replenishment Actions</span>
+          <div class="w-10 h-10 rounded-lg bg-green-500 bg-opacity-20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+        </div>
+        <div class="text-3xl font-bold" x-text="ct?.replenishment?.total_recommendations?.toLocaleString() || '—'"></div>
+        <div class="text-sm text-gray-400 mt-1"><span class="text-red-400" x-text="ct?.replenishment?.emergency_count || 0"></span> emergency, <span class="text-yellow-400" x-text="ct?.replenishment?.urgent_count || 0"></span> urgent</div>
+      </div>
+      <div class="card stat-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-gray-400">Transfer Value</span>
+          <div class="w-10 h-10 rounded-lg bg-blue-500 bg-opacity-20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          </div>
+        </div>
+        <div class="text-3xl font-bold" x-text="'₹' + ((ct?.transfers?.net_value || 0) / 1000).toFixed(1) + 'K'"></div>
+        <div class="text-sm text-gray-400 mt-1"><span x-text="ct?.transfers?.total_transfers || 0"></span> transfers, <span x-text="ct?.transfers?.total_units || 0"></span> units</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card p-6">
+        <h3 class="text-lg font-semibold mb-4">Lifecycle Distribution</h3>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="lifecycleChart"></canvas>
+        </div>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-lg font-semibold mb-4">Inventory Health</h3>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="inventoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tables Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Replenishment Actions -->
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Top Replenishment Actions</h3>
+          <button @click="currentPage='replenishment'; loadPage('replenishment')" class="text-sm text-indigo-400 hover:text-indigo-300">View all →</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+              <th class="pb-3">SKU</th><th class="pb-3">Store</th><th class="pb-3">Qty</th><th class="pb-3">Urgency</th>
+            </tr></thead>
+            <tbody>
+              <template x-for="a in (ct?.replenishment?.top_actions || []).slice(0,5)" :key="a.sku_id+a.destination_store">
+                <tr class="table-row border-b border-gray-800">
+                  <td class="py-3 font-mono text-xs" x-text="a.sku_id"></td>
+                  <td class="py-3 text-gray-300" x-text="a.destination_store"></td>
+                  <td class="py-3 font-semibold" x-text="a.recommended_qty"></td>
+                  <td class="py-3"><span class="badge" :class="a.urgency==='emergency'?'badge-danger':a.urgency==='urgent'?'badge-warning':'badge-info'" x-text="a.urgency"></span></td>
+                </tr>
+              </template>
+              <tr x-show="!ct?.replenishment?.top_actions?.length"><td colspan="4" class="py-6 text-center text-gray-500">No actions pending</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transfer Actions -->
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Top Transfer Actions</h3>
+          <button @click="currentPage='transfers'; loadPage('transfers')" class="text-sm text-indigo-400 hover:text-indigo-300">View all →</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+              <th class="pb-3">From</th><th class="pb-3">To</th><th class="pb-3">SKU</th><th class="pb-3">Qty</th><th class="pb-3">Value</th>
+            </tr></thead>
+            <tbody>
+              <template x-for="t in (ct?.transfers?.top_actions || []).slice(0,5)" :key="t.from_store_id+t.to_store_id+t.sku_id">
+                <tr class="table-row border-b border-gray-800">
+                  <td class="py-3 font-mono text-xs" x-text="t.from_store_id"></td>
+                  <td class="py-3 font-mono text-xs" x-text="t.to_store_id"></td>
+                  <td class="py-3 text-gray-300" x-text="t.sku_id"></td>
+                  <td class="py-3 font-semibold" x-text="t.qty"></td>
+                  <td class="py-3 text-green-400" x-text="'₹' + (t.net_value||0).toFixed(0)"></td>
+                </tr>
+              </template>
+              <tr x-show="!ct?.transfers?.top_actions?.length"><td colspan="5" class="py-6 text-center text-gray-500">No transfers pending</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vendor & PO Summary -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      <div class="card p-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Vendor Health</h3>
+        <div class="text-2xl font-bold mb-1" x-text="ct?.vendor_alerts?.total_vendors || 0"></div>
+        <div class="text-sm text-gray-400 mb-3">Active Vendors</div>
+        <div class="text-sm">Avg Score: <span class="text-indigo-400 font-semibold" x-text="((ct?.vendor_alerts?.avg_composite_score || 0) * 100).toFixed(0) + '%'"></span></div>
+        <template x-for="v in (ct?.vendor_alerts?.low_score_vendors || [])" :key="v.vendor_id">
+          <div class="mt-2 p-2 bg-red-500 bg-opacity-10 rounded text-xs flex justify-between">
+            <span x-text="v.vendor_name"></span>
+            <span class="text-red-400" x-text="(v.reliability_score*100).toFixed(0) + '%'"></span>
+          </div>
+        </template>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Purchase Orders</h3>
+        <div class="text-2xl font-bold mb-1" x-text="ct?.purchase_orders?.total_pos || 0"></div>
+        <div class="text-sm text-gray-400 mb-3">Active POs</div>
+        <div class="text-sm">Total Value: <span class="text-green-400 font-semibold" x-text="'₹' + ((ct?.purchase_orders?.total_value || 0) / 100000).toFixed(1) + 'L'"></span></div>
+        <div class="text-sm mt-1">Units: <span class="font-semibold" x-text="(ct?.purchase_orders?.total_units || 0).toLocaleString()"></span></div>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">Lifecycle Actions</h3>
+        <div class="text-2xl font-bold mb-1" x-text="ct?.lifecycle?.total_classified || 0"></div>
+        <div class="text-sm text-gray-400 mb-3">SKUs Classified</div>
+        <div class="text-sm">Confidence: <span class="text-indigo-400 font-semibold" x-text="((ct?.lifecycle?.avg_confidence || 0) * 100).toFixed(0) + '%'"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forecasts Page -->
+  <div x-show="!loading && currentPage === 'forecasts'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4 mb-4">
+        <input x-model="forecastStoreId" type="text" placeholder="Store ID (e.g. STR0001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <input x-model="forecastSkuId" type="text" placeholder="SKU ID (e.g. SKU00001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <button @click="loadForecasts()" class="btn-primary text-sm">Search</button>
+        <button @click="runForecasts()" class="btn-outline text-sm">Run Forecast Pipeline</button>
+      </div>
+      <p x-show="forecastMsg" class="text-sm text-green-400" x-text="forecastMsg"></p>
+    </div>
+    <div class="card p-6" x-show="forecasts.length">
+      <h3 class="text-lg font-semibold mb-4">Forecast Results (<span x-text="forecasts.length"></span>)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">Store</th><th class="pb-3">SKU</th><th class="pb-3">Week</th><th class="pb-3">Forecast</th><th class="pb-3">Lower</th><th class="pb-3">Upper</th><th class="pb-3">Model</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="f in forecasts.slice(0,50)" :key="f.store_id+f.sku_id+f.forecast_week">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs" x-text="f.store_id"></td>
+                <td class="py-2 font-mono text-xs" x-text="f.sku_id"></td>
+                <td class="py-2" x-text="f.forecast_week"></td>
+                <td class="py-2 font-semibold text-indigo-400" x-text="f.point_forecast?.toFixed(1)"></td>
+                <td class="py-2 text-gray-400" x-text="f.lower_bound?.toFixed(1)"></td>
+                <td class="py-2 text-gray-400" x-text="f.upper_bound?.toFixed(1)"></td>
+                <td class="py-2"><span class="badge badge-purple" x-text="f.model_used"></span></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div x-show="!forecasts.length" class="card p-12 text-center text-gray-500">
+      <svg class="w-12 h-12 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      <p>Enter a Store or SKU ID and click Search, or run the forecast pipeline first.</p>
+    </div>
+  </div>
+
+  <!-- Lifecycle Page -->
+  <div x-show="!loading && currentPage === 'lifecycle'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4 mb-4">
+        <input x-model="lifecycleSkuId" type="text" placeholder="SKU ID (e.g. SKU00001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <button @click="loadLifecycleSku()" class="btn-primary text-sm">Lookup SKU</button>
+        <button @click="runLifecycleClassify()" class="btn-outline text-sm">Run Classification</button>
+      </div>
+      <p x-show="lifecycleMsg" class="text-sm text-green-400" x-text="lifecycleMsg"></p>
+    </div>
+    <!-- Single SKU result -->
+    <div class="card p-6 mb-6" x-show="lifecycleSku">
+      <h3 class="text-lg font-semibold mb-4">SKU Lifecycle: <span class="text-indigo-400" x-text="lifecycleSku?.sku_id"></span></h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div><span class="text-gray-400 text-sm">Stage</span><div class="text-lg font-bold mt-1"><span class="badge" :class="stageColor(lifecycleSku?.lifecycle_stage)" x-text="lifecycleSku?.lifecycle_stage"></span></div></div>
+        <div><span class="text-gray-400 text-sm">Confidence</span><div class="text-lg font-bold mt-1" x-text="((lifecycleSku?.confidence||0)*100).toFixed(0)+'%'"></div></div>
+        <div><span class="text-gray-400 text-sm">Action</span><div class="text-sm font-semibold mt-1 text-yellow-400" x-text="lifecycleSku?.recommended_action"></div></div>
+        <div><span class="text-gray-400 text-sm">Age</span><div class="text-lg font-bold mt-1" x-text="(lifecycleSku?.age_days||0)+' days'"></div></div>
+      </div>
+      <div class="mt-4 p-3 bg-gray-800 rounded-lg text-sm text-gray-300" x-text="lifecycleSku?.reason"></div>
+    </div>
+    <!-- Summary -->
+    <div class="card p-6" x-show="lifecycleSummary">
+      <h3 class="text-lg font-semibold mb-4">Classification Summary</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <template x-for="[stage, count] in Object.entries(lifecycleSummary?.stage_counts || {})" :key="stage">
+          <div class="text-center p-4 bg-gray-800 rounded-lg">
+            <div class="text-2xl font-bold" x-text="count"></div>
+            <div class="text-xs text-gray-400 mt-1 capitalize" x-text="stage"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Replenishment Page -->
+  <div x-show="!loading && currentPage === 'replenishment'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4">
+        <input x-model="replenStoreId" type="text" placeholder="Store ID (e.g. STR0001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <select x-model="replenUrgency" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+          <option value="">All Urgencies</option>
+          <option value="emergency">Emergency</option>
+          <option value="urgent">Urgent</option>
+          <option value="normal">Normal</option>
+        </select>
+        <button @click="loadReplenishment()" class="btn-primary text-sm">Search</button>
+        <button @click="runReplenishment()" class="btn-outline text-sm">Run Pipeline</button>
+      </div>
+    </div>
+    <div class="card p-6" x-show="replenishments.length">
+      <h3 class="text-lg font-semibold mb-4">Replenishment Plan (<span x-text="replenishments.length"></span> actions)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">SKU</th><th class="pb-3">Store</th><th class="pb-3">Source</th><th class="pb-3">Qty</th><th class="pb-3">On Hand</th><th class="pb-3">Days Cover</th><th class="pb-3">Urgency</th><th class="pb-3">Risk</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="r in replenishments.slice(0,100)" :key="r.sku_id+r.destination_store">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs" x-text="r.sku_id"></td>
+                <td class="py-2" x-text="r.destination_store"></td>
+                <td class="py-2 text-gray-400 text-xs" x-text="r.source_location"></td>
+                <td class="py-2 font-semibold" x-text="r.recommended_qty"></td>
+                <td class="py-2" x-text="r.on_hand_qty"></td>
+                <td class="py-2" x-text="r.current_days_of_cover?.toFixed(1)"></td>
+                <td class="py-2"><span class="badge" :class="r.urgency==='emergency'?'badge-danger':r.urgency==='urgent'?'badge-warning':'badge-info'" x-text="r.urgency"></span></td>
+                <td class="py-2"><span class="text-red-400" x-text="(r.stockout_risk*100).toFixed(0)+'%'"></span></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div x-show="!replenishments.length" class="card p-12 text-center text-gray-500">
+      <p>Search by store or run the replenishment pipeline to see recommendations.</p>
+    </div>
+  </div>
+
+  <!-- Assortment Page -->
+  <div x-show="!loading && currentPage === 'assortment'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4">
+        <input x-model="assortStoreId" type="text" placeholder="Store ID (e.g. STR0001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <button @click="loadAssortment()" class="btn-primary text-sm">View Assortment</button>
+        <button @click="loadAssortmentScenarios()" class="btn-outline text-sm">View Scenarios</button>
+      </div>
+    </div>
+    <!-- Assortment Results -->
+    <div class="card p-6 mb-6" x-show="assortResult">
+      <h3 class="text-lg font-semibold mb-4">Store Assortment: <span class="text-indigo-400" x-text="assortResult?.store_id"></span></h3>
+      <div class="grid grid-cols-4 gap-4 mb-4">
+        <div class="p-3 bg-gray-800 rounded"><span class="text-gray-400 text-xs">Status</span><div class="font-bold mt-1" x-text="assortResult?.status"></div></div>
+        <div class="p-3 bg-gray-800 rounded"><span class="text-gray-400 text-xs">Objective</span><div class="font-bold mt-1" x-text="assortResult?.objective_value?.toFixed(1)"></div></div>
+        <div class="p-3 bg-gray-800 rounded"><span class="text-gray-400 text-xs">Capacity</span><div class="font-bold mt-1" x-text="(assortResult?.used_capacity||0)+' / '+(assortResult?.total_capacity||0)"></div></div>
+        <div class="p-3 bg-gray-800 rounded"><span class="text-gray-400 text-xs">Selected SKUs</span><div class="font-bold mt-1" x-text="assortResult?.selected_skus?.length || 0"></div></div>
+      </div>
+      <div class="overflow-x-auto" x-show="assortResult?.selected_skus?.length">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">SKU</th><th class="pb-3">Category</th><th class="pb-3">Brand</th><th class="pb-3">Type</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="s in (assortResult?.selected_skus||[]).slice(0,30)" :key="s.sku_id">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs" x-text="s.sku_id"></td>
+                <td class="py-2" x-text="s.category"></td>
+                <td class="py-2 text-gray-300" x-text="s.brand || '—'"></td>
+                <td class="py-2"><span class="badge badge-purple" x-text="s.sku_type || s.fulfillment_type || '—'"></span></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Scenarios -->
+    <div class="card p-6" x-show="assortScenarios.length">
+      <h3 class="text-lg font-semibold mb-4">Optimization Scenarios</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <template x-for="sc in assortScenarios" :key="sc.name">
+          <div class="p-4 bg-gray-800 rounded-lg">
+            <div class="font-semibold mb-1 capitalize" x-text="sc.name.replace(/_/g, ' ')"></div>
+            <div class="text-xs text-gray-400 mb-3" x-text="sc.description"></div>
+            <div class="space-y-1 text-xs">
+              <template x-for="[k,v] in Object.entries(sc.weights || {})" :key="k">
+                <div class="flex justify-between"><span class="text-gray-400 capitalize" x-text="k"></span><span x-text="v"></span></div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transfers Page -->
+  <div x-show="!loading && currentPage === 'transfers'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4">
+        <input x-model="transferStoreId" type="text" placeholder="Store ID (e.g. STR0001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <button @click="loadTransfers()" class="btn-primary text-sm">View Store Transfers</button>
+        <button @click="loadAllTransfers()" class="btn-outline text-sm">All Recommendations</button>
+        <button @click="runTransfers()" class="btn-outline text-sm">Run Optimizer</button>
+      </div>
+    </div>
+    <!-- Transfer summary -->
+    <div class="card p-6 mb-6" x-show="transferStore">
+      <h3 class="text-lg font-semibold mb-4">Transfers: <span class="text-indigo-400" x-text="transferStore?.store_id"></span></h3>
+      <div class="grid grid-cols-3 gap-4 mb-4">
+        <div class="p-3 bg-gray-800 rounded text-center"><span class="text-gray-400 text-xs">Outbound</span><div class="text-xl font-bold text-red-400" x-text="transferStore?.total_outbound_units || 0"></div></div>
+        <div class="p-3 bg-gray-800 rounded text-center"><span class="text-gray-400 text-xs">Inbound</span><div class="text-xl font-bold text-green-400" x-text="transferStore?.total_inbound_units || 0"></div></div>
+        <div class="p-3 bg-gray-800 rounded text-center"><span class="text-gray-400 text-xs">Net</span><div class="text-xl font-bold" x-text="transferStore?.net_units || 0"></div></div>
+      </div>
+    </div>
+    <!-- All transfers -->
+    <div class="card p-6" x-show="allTransfers.length">
+      <h3 class="text-lg font-semibold mb-4">Transfer Recommendations (<span x-text="allTransfers.length"></span>)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">From</th><th class="pb-3">To</th><th class="pb-3">SKU</th><th class="pb-3">Qty</th><th class="pb-3">Reason</th><th class="pb-3">Net Value</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="t in allTransfers.slice(0,50)" :key="t.transfer_id">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs" x-text="t.from_store_id"></td>
+                <td class="py-2 font-mono text-xs" x-text="t.to_store_id"></td>
+                <td class="py-2" x-text="t.sku_id"></td>
+                <td class="py-2 font-semibold" x-text="t.qty"></td>
+                <td class="py-2"><span class="badge badge-info" x-text="t.reason"></span></td>
+                <td class="py-2 text-green-400" x-text="'₹' + (t.net_value||0).toFixed(0)"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendors Page -->
+  <div x-show="!loading && currentPage === 'vendors'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4">
+        <button @click="loadVendors()" class="btn-primary text-sm">Load All Vendors</button>
+        <input x-model="vendorLookupId" type="text" placeholder="Vendor ID (e.g. VND001)" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white w-48 focus:border-indigo-500 outline-none">
+        <button @click="loadVendorPortal()" class="btn-outline text-sm">View Portal</button>
+      </div>
+    </div>
+    <!-- Vendor cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" x-show="vendorList.length">
+      <template x-for="v in vendorList" :key="v.vendor_id">
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <div class="font-semibold" x-text="v.vendor_name"></div>
+              <div class="text-xs text-gray-400" x-text="v.vendor_id"></div>
+            </div>
+            <span class="badge" :class="v.tier==='gold'?'badge-warning':v.tier==='silver'?'badge-info':'badge-purple'" x-text="v.tier"></span>
+          </div>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-gray-400">Composite Score</span><span class="font-semibold" :class="v.composite_score > 0.8 ? 'text-green-400' : v.composite_score > 0.6 ? 'text-yellow-400' : 'text-red-400'" x-text="(v.composite_score*100).toFixed(0)+'%'"></span></div>
+            <div class="w-full h-2 bg-gray-700 rounded-full"><div class="h-2 rounded-full" :class="v.composite_score > 0.8 ? 'bg-green-400' : v.composite_score > 0.6 ? 'bg-yellow-400' : 'bg-red-400'" :style="'width:'+v.composite_score*100+'%'"></div></div>
+            <div class="flex justify-between"><span class="text-gray-400">On-time Delivery</span><span x-text="(v.on_time_delivery_rate*100).toFixed(0)+'%'"></span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Quality Pass</span><span x-text="(v.quality_pass_rate*100).toFixed(0)+'%'"></span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Total POs</span><span x-text="v.total_pos"></span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Active SKUs</span><span x-text="v.active_skus +' / '+v.total_skus"></span></div>
+          </div>
+        </div>
+      </template>
+    </div>
+    <!-- Vendor Portal -->
+    <div class="card p-6 mt-6" x-show="vendorPortal">
+      <h3 class="text-lg font-semibold mb-4">Vendor Portal: <span class="text-indigo-400" x-text="vendorPortal?.vendor_name"></span></h3>
+      <div x-show="vendorPortal?.open_pos?.length">
+        <h4 class="text-sm font-semibold text-gray-400 mb-3">Open Purchase Orders</h4>
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">PO</th><th class="pb-3">Status</th><th class="pb-3">Order Date</th><th class="pb-3">Expected</th><th class="pb-3">Qty</th><th class="pb-3">Value</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="po in vendorPortal?.open_pos||[]" :key="po.po_id">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs" x-text="po.po_id"></td>
+                <td class="py-2"><span class="badge badge-info" x-text="po.status"></span></td>
+                <td class="py-2" x-text="po.order_date"></td>
+                <td class="py-2" x-text="po.expected_delivery_date"></td>
+                <td class="py-2 font-semibold" x-text="po.total_qty"></td>
+                <td class="py-2 text-green-400" x-text="'₹'+(po.total_value||0).toLocaleString()"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Purchase Orders Page -->
+  <div x-show="!loading && currentPage === 'purchase-orders'" class="p-8">
+    <div class="card p-6 mb-6">
+      <div class="flex items-center gap-4">
+        <select x-model="poStatus" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+          <option value="">All Status</option>
+          <option value="draft">Draft</option><option value="submitted">Submitted</option>
+          <option value="approved">Approved</option><option value="in_transit">In Transit</option>
+          <option value="received">Received</option><option value="cancelled">Cancelled</option>
+        </select>
+        <button @click="loadPurchaseOrders()" class="btn-primary text-sm">Load POs</button>
+        <button @click="generatePOs()" class="btn-outline text-sm">Generate Recommendations</button>
+      </div>
+    </div>
+    <div class="card p-6" x-show="purchaseOrders.length">
+      <h3 class="text-lg font-semibold mb-4">Purchase Orders (<span x-text="purchaseOrders.length"></span>)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">PO ID</th><th class="pb-3">Vendor</th><th class="pb-3">Status</th><th class="pb-3">Order Date</th><th class="pb-3">Expected</th><th class="pb-3">Qty</th><th class="pb-3">Value</th><th class="pb-3">Delay</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="po in purchaseOrders.slice(0,100)" :key="po.po_id">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs" x-text="po.po_id"></td>
+                <td class="py-2" x-text="po.vendor_id"></td>
+                <td class="py-2"><span class="badge" :class="po.status==='received'?'badge-success':po.status==='in_transit'?'badge-info':po.status==='cancelled'?'badge-danger':'badge-warning'" x-text="po.status"></span></td>
+                <td class="py-2" x-text="po.order_date"></td>
+                <td class="py-2" x-text="po.expected_delivery_date"></td>
+                <td class="py-2 font-semibold" x-text="po.total_qty"></td>
+                <td class="py-2 text-green-400" x-text="'₹'+(po.total_value||0).toLocaleString()"></td>
+                <td class="py-2" :class="po.delivery_delay_days > 2 ? 'text-red-400' : 'text-gray-400'" x-text="(po.delivery_delay_days||0)+'d'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function app() {
+  const API = window.location.origin;
+  return {
+    currentPage: 'dashboard',
+    loading: true,
+    apiHealthy: false,
+    ct: null,
+    // Forecasts
+    forecasts: [], forecastStoreId: '', forecastSkuId: '', forecastMsg: '',
+    // Lifecycle
+    lifecycleSkuId: '', lifecycleSku: null, lifecycleSummary: null, lifecycleMsg: '',
+    // Replenishment
+    replenStoreId: '', replenUrgency: '', replenishments: [],
+    // Assortment
+    assortStoreId: '', assortResult: null, assortScenarios: [],
+    // Transfers
+    transferStoreId: '', transferStore: null, allTransfers: [],
+    // Vendors
+    vendorList: [], vendorLookupId: '', vendorPortal: null,
+    // POs
+    poStatus: '', purchaseOrders: [],
+
+    navItems: [
+      { id: 'dashboard', label: 'Control Tower', desc: 'Unified platform overview', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>' },
+      { id: 'forecasts', label: 'Demand Forecasts', desc: 'Store & SKU level demand predictions', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+      { id: 'lifecycle', label: 'Product Lifecycle', desc: 'SKU classification & survival analysis', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' },
+      { id: 'replenishment', label: 'Replenishment', desc: 'Automated replenishment recommendations', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
+      { id: 'assortment', label: 'Assortment', desc: 'Store assortment optimization', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>' },
+      { id: 'transfers', label: 'Transfers', desc: 'Inter-store transfer optimization', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>' },
+      { id: 'vendors', label: 'Vendors', desc: 'Vendor scorecards & portal', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
+      { id: 'purchase-orders', label: 'Purchase Orders', desc: 'PO management & recommendations', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' },
+    ],
+
+    async init() {
+      await this.checkHealth();
+      await this.loadDashboard();
+    },
+
+    async api(path, opts = {}) {
+      try {
+        const r = await fetch(API + path, opts);
+        if (!r.ok) throw new Error(`${r.status}`);
+        return await r.json();
+      } catch (e) {
+        console.error('API error:', path, e);
+        return null;
+      }
+    },
+
+    async checkHealth() {
+      const r = await this.api('/health');
+      this.apiHealthy = r?.status === 'healthy';
+    },
+
+    async loadDashboard() {
+      this.loading = true;
+      this.ct = await this.api('/api/v1/control-tower/summary');
+      this.loading = false;
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    async loadPage(page) {
+      if (page === 'dashboard') await this.loadDashboard();
+      else if (page === 'vendors') await this.loadVendors();
+      else if (page === 'purchase-orders') await this.loadPurchaseOrders();
+    },
+
+    refreshAll() { this.loadPage(this.currentPage); },
+
+    renderCharts() {
+      // Lifecycle chart
+      const lcEl = document.getElementById('lifecycleChart');
+      if (lcEl && this.ct?.lifecycle?.stage_distribution) {
+        if (lcEl._chart) lcEl._chart.destroy();
+        const dist = this.ct.lifecycle.stage_distribution;
+        lcEl._chart = new Chart(lcEl, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(dist).map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+            datasets: [{
+              data: Object.values(dist),
+              backgroundColor: ['#818cf8','#34d399','#38bdf8','#fbbf24','#f87171','#a78bfa'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'right', labels: { color: '#94a3b8', padding: 12, font: { size: 12 } } } }
+          }
+        });
+      }
+      // Inventory health chart
+      const ihEl = document.getElementById('inventoryChart');
+      if (ihEl && this.ct?.stockout_risk) {
+        if (ihEl._chart) ihEl._chart.destroy();
+        const sr = this.ct.stockout_risk;
+        ihEl._chart = new Chart(ihEl, {
+          type: 'bar',
+          data: {
+            labels: ['Stockout', 'Critical', 'Low', 'Healthy', 'Excess'],
+            datasets: [{
+              data: [sr.stockout_count, sr.critical_count, sr.low_count, sr.healthy_count, sr.excess_count],
+              backgroundColor: ['#f87171','#fb923c','#fbbf24','#34d399','#818cf8'],
+              borderRadius: 6, borderSkipped: false
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } }
+          }
+        });
+      }
+    },
+
+    // Forecasts
+    async loadForecasts() {
+      this.forecastMsg = '';
+      if (this.forecastStoreId) {
+        this.forecasts = (await this.api(`/api/v1/forecasts/store/${this.forecastStoreId}`)) || [];
+      } else if (this.forecastSkuId) {
+        this.forecasts = (await this.api(`/api/v1/forecasts/sku/${this.forecastSkuId}`)) || [];
+      } else {
+        const r = await this.api('/api/v1/forecasts/latest?limit=100');
+        this.forecasts = r?.forecasts || [];
+      }
+    },
+    async runForecasts() {
+      this.forecastMsg = 'Running forecast pipeline...';
+      const r = await this.api('/api/v1/forecasts/run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+      this.forecastMsg = r?.message || 'Pipeline complete';
+      await this.loadForecasts();
+    },
+
+    // Lifecycle
+    stageColor(stage) {
+      return { launch:'badge-info', growth:'badge-success', core:'badge-purple', maturity:'badge-warning', decline:'badge-danger', exit:'badge-danger' }[stage] || 'badge-info';
+    },
+    async loadLifecycleSku() {
+      if (!this.lifecycleSkuId) return;
+      this.lifecycleSku = await this.api(`/api/v1/lifecycle/sku/${this.lifecycleSkuId}`);
+    },
+    async runLifecycleClassify() {
+      this.lifecycleMsg = 'Running classification...';
+      const r = await this.api('/api/v1/lifecycle/classify', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+      this.lifecycleSummary = r;
+      this.lifecycleMsg = `Classified ${r?.total_skus || 0} SKUs`;
+    },
+
+    // Replenishment
+    async loadReplenishment() {
+      if (this.replenStoreId) {
+        let url = `/api/v1/replenishment/store/${this.replenStoreId}`;
+        if (this.replenUrgency) url += `?urgency=${this.replenUrgency}`;
+        this.replenishments = (await this.api(url)) || [];
+      } else {
+        let url = '/api/v1/replenishment/plan?limit=200';
+        if (this.replenUrgency) url += `&urgency=${this.replenUrgency}`;
+        const r = await this.api(url);
+        this.replenishments = r?.plans || [];
+      }
+    },
+    async runReplenishment() {
+      await this.api('/api/v1/replenishment/run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+      await this.loadReplenishment();
+    },
+
+    // Assortment
+    async loadAssortment() {
+      if (!this.assortStoreId) return;
+      this.assortResult = await this.api(`/api/v1/assortment/store/${this.assortStoreId}`);
+    },
+    async loadAssortmentScenarios() {
+      this.assortScenarios = (await this.api('/api/v1/assortment/scenarios')) || [];
+    },
+
+    // Transfers
+    async loadTransfers() {
+      if (!this.transferStoreId) return;
+      this.transferStore = await this.api(`/api/v1/transfers/store/${this.transferStoreId}`);
+    },
+    async loadAllTransfers() {
+      const r = await this.api('/api/v1/transfers/recommendations?limit=100');
+      this.allTransfers = r?.transfers || [];
+    },
+    async runTransfers() {
+      await this.api('/api/v1/transfers/run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+      await this.loadAllTransfers();
+    },
+
+    // Vendors
+    async loadVendors() {
+      const r = await this.api('/api/v1/vendors/scorecards');
+      this.vendorList = r?.scorecards || [];
+    },
+    async loadVendorPortal() {
+      if (!this.vendorLookupId) return;
+      this.vendorPortal = await this.api(`/api/v1/vendors/portal/${this.vendorLookupId}`);
+    },
+
+    // Purchase Orders
+    async loadPurchaseOrders() {
+      let url = '/api/v1/purchase-orders/?limit=100';
+      if (this.poStatus) url += `&status=${this.poStatus}`;
+      const r = await this.api(url);
+      this.purchaseOrders = r?.purchase_orders || [];
+    },
+    async generatePOs() {
+      await this.api('/api/v1/purchase-orders/generate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+      await this.loadPurchaseOrders();
+    },
+  };
+}
+</script>
+</body>
+</html>
