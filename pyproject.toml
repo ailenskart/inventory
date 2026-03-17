@@ -49,6 +49,9 @@ dev = [
     "faker>=24.0.0",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["apps", "ml", "services", "schemas", "orchestration", "data", "scripts"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 120
