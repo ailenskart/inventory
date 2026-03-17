@@ -147,7 +147,63 @@ def _format_forecast_output(
     if "is_display_only" in output.columns:
         output.loc[output["is_display_only"] == 1, "reason_code"] = "display_only_trial_demand"
 
+    # Apply lifecycle-aware adjustments if lifecycle data is available
+    output = _apply_lifecycle_adjustments(output, config)
+
     return output
+
+
+def _apply_lifecycle_adjustments(
+    forecasts: pd.DataFrame,
+    config: ForecastConfig,
+) -> pd.DataFrame:
+    """Apply lifecycle-stage-aware adjustments to forecasts.
+
+    - Launch SKUs get a forecast floor (don't underforecast new products)
+    - Decline/exit SKUs get wider uncertainty bands
+    - Lifecycle stage is added as context for downstream consumers
+    """
+    from ml.forecasting.config import LIFECYCLE_FORECAST_ADJUSTMENTS
+
+    try:
+        con = duckdb.connect(config.db_path, read_only=True)
+        lifecycle_df = con.execute(
+            "SELECT sku_id, lifecycle_stage FROM main_ml.lifecycle_classifications"
+        ).fetchdf()
+        con.close()
+    except Exception:
+        # Lifecycle data not yet available — skip adjustments
+        return forecasts
+
+    if lifecycle_df.empty:
+        return forecasts
+
+    df = forecasts.merge(lifecycle_df, on="sku_id", how="left", suffixes=("", "_lc"))
+
+    for stage, adj in LIFECYCLE_FORECAST_ADJUSTMENTS.items():
+        mask = df["lifecycle_stage"] == stage
+        if not mask.any():
+            continue
+
+        # Apply forecast floor for launch SKUs
+        floor = adj.get("min_forecast_floor", 0.0)
+        if floor > 0:
+            df.loc[mask, "point_forecast"] = df.loc[mask, "point_forecast"].clip(lower=floor)
+
+        # Widen uncertainty for high-uncertainty stages
+        mult = adj.get("uncertainty_multiplier", 1.0)
+        if mult != 1.0:
+            midpoint = df.loc[mask, "point_forecast"]
+            df.loc[mask, "lower_bound"] = (midpoint - (midpoint - df.loc[mask, "lower_bound"]) * mult).clip(lower=0)
+            df.loc[mask, "upper_bound"] = midpoint + (df.loc[mask, "upper_bound"] - midpoint) * mult
+
+    # Drop the merge column if it was added
+    if "lifecycle_stage" in df.columns:
+        df = df.drop(columns=["lifecycle_stage"])
+    if "lifecycle_stage_lc" in df.columns:
+        df = df.drop(columns=["lifecycle_stage_lc"])
+
+    return df
 
 
 def _write_forecasts_to_db(forecasts: pd.DataFrame, config: ForecastConfig):

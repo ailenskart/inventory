@@ -54,6 +54,18 @@ HIERARCHY_SPEC = [
     ["region", "store_cluster", "store_id", "category", "sku_id"],
 ]
 
+# Lifecycle-aware forecast adjustments
+# SKUs in different lifecycle stages may need different model selection
+# or forecast dampening/boosting
+LIFECYCLE_FORECAST_ADJUSTMENTS: dict[str, dict[str, float]] = {
+    "launch": {"min_forecast_floor": 1.0, "uncertainty_multiplier": 1.5},
+    "growth": {"min_forecast_floor": 0.5, "uncertainty_multiplier": 1.2},
+    "core": {"min_forecast_floor": 0.0, "uncertainty_multiplier": 1.0},
+    "maturity": {"min_forecast_floor": 0.0, "uncertainty_multiplier": 1.0},
+    "decline": {"min_forecast_floor": 0.0, "uncertainty_multiplier": 1.3},
+    "exit": {"min_forecast_floor": 0.0, "uncertainty_multiplier": 1.5},
+}
+
 # Inventory status thresholds (weeks of supply)
 INVENTORY_THRESHOLDS = {
     "stockout": 0,

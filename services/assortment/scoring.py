@@ -54,8 +54,12 @@ def compute_sku_scores(
     df["margin_score"] = _normalize_column(df, "margin_pct")
 
     # 4. Freshness score: from lifecycle stage
+    #    Uses lifecycle intelligence freshness mapping when available,
+    #    falls back to config.freshness_scores for backward compatibility
+    from services.lifecycle.config import LIFECYCLE_FRESHNESS_SCORES
+    merged_freshness = {**config.freshness_scores, **LIFECYCLE_FRESHNESS_SCORES}
     df["freshness_score"] = df["lifecycle_stage"].map(
-        config.freshness_scores
+        merged_freshness
     ).fillna(0.3)
 
     # 5. New-launch score: binary (1 if new, 0 otherwise)
@@ -72,9 +76,10 @@ def compute_sku_scores(
 
     # ─── Penalty scores (negative contributions) ────────────────────────
 
-    # Stale penalty: aging / eol products
+    # Stale penalty: aging / eol / decline / exit products
     df["stale_penalty"] = df["lifecycle_stage"].map({
         "aging": 0.5, "eol": 1.0,
+        "decline": 0.4, "exit": 1.0,
     }).fillna(0.0)
 
     # Poor fit penalty: sell-through SKU with zero demand → doesn't belong
