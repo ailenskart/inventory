@@ -48,14 +48,61 @@ CITIES = [
     ("Coimbatore", "Tamil Nadu", "South", 11.016, 76.955),
 ]
 
-BRANDS = ["Lenskart Air", "Lenskart Blu", "Vincent Chase", "John Jacobs", "Hooper", "Aqua", "Hustlr"]
+# ─── Real Lenskart product data ──────────────────────────────────────────────
 
-FRAME_SHAPES = ["rectangle", "round", "aviator", "cat_eye", "wayfarer", "square", "clubmaster", "geometric"]
-FRAME_MATERIALS = ["metal", "acetate", "TR90", "titanium", "mixed"]
-FRAME_COLORS = ["black", "brown", "blue", "gold", "silver", "tortoise", "gunmetal", "transparent", "red", "green"]
-LENS_TYPES = ["clear", "blue_cut", "photochromic", "polarized", "tinted", "progressive", "bifocal"]
-SIZES = ["S", "M", "L"]
-GENDERS = ["M", "F", "Unisex"]
+# In-house brands (primary revenue, ~85% of catalog)
+INHOUSE_BRANDS = ["Vincent Chase", "John Jacobs", "Lenskart Air", "Lenskart Blu", "Hooper", "Hustlr", "Aqua", "Aquacolor"]
+# Third-party / licensed brands
+THIRDPARTY_BRANDS = ["Ray-Ban", "Oakley", "Carrera", "Tommy Hilfiger", "Lee Cooper", "New Balance", "Owndays"]
+# Contact lens third-party brands
+CL_BRANDS = ["Bausch & Lomb", "Acuvue", "Alcon", "CooperVision", "Aqua", "Aquacolor"]
+
+# Brand → typical categories and price positioning
+BRAND_CONFIG = {
+    "Vincent Chase":   {"cats": ["eyeglasses", "sunglasses"], "prices": [499, 799, 999, 1299, 1599, 1999, 2499, 2999], "weight": 25},
+    "John Jacobs":     {"cats": ["eyeglasses", "sunglasses"], "prices": [1299, 1599, 1999, 2499, 2999, 3999, 4999], "weight": 18},
+    "Lenskart Air":    {"cats": ["eyeglasses"], "prices": [999, 1299, 1599, 1999, 2499, 3999], "weight": 15},
+    "Lenskart Blu":    {"cats": ["computer_glasses"], "prices": [799, 999, 1299, 1599, 2499], "weight": 8},
+    "Hooper":          {"cats": ["eyeglasses", "computer_glasses"], "prices": [499, 799, 999, 1299, 1999], "weight": 7},
+    "Hustlr":          {"cats": ["eyeglasses", "sunglasses"], "prices": [799, 999, 1299, 1999, 2499], "weight": 5},
+    "Aqua":            {"cats": ["contact_lenses"], "prices": [300, 499, 699, 899, 1199, 1499], "weight": 5},
+    "Aquacolor":       {"cats": ["contact_lenses"], "prices": [500, 699, 899, 1199], "weight": 3},
+    "Ray-Ban":         {"cats": ["eyeglasses", "sunglasses"], "prices": [4999, 5999, 7999, 9999, 12999], "weight": 4},
+    "Oakley":          {"cats": ["sunglasses"], "prices": [5999, 7999, 9999, 14999], "weight": 2},
+    "Carrera":         {"cats": ["sunglasses"], "prices": [3999, 4999, 5999, 7999], "weight": 2},
+    "Tommy Hilfiger":  {"cats": ["eyeglasses"], "prices": [3999, 4999, 5999, 7999], "weight": 1},
+    "Lee Cooper":      {"cats": ["eyeglasses"], "prices": [1999, 2499, 2999, 3999], "weight": 1},
+    "New Balance":     {"cats": ["eyeglasses"], "prices": [2499, 2999, 3999], "weight": 1},
+    "Owndays":         {"cats": ["eyeglasses", "sunglasses"], "prices": [4999, 5999, 7999, 9999], "weight": 1},
+    "Bausch & Lomb":   {"cats": ["contact_lenses"], "prices": [399, 599, 899, 1299, 1599], "weight": 1},
+    "Acuvue":          {"cats": ["contact_lenses"], "prices": [699, 999, 1499, 1999], "weight": 1},
+    "Alcon":           {"cats": ["contact_lenses"], "prices": [599, 899, 1299, 1799], "weight": 0},
+    "CooperVision":    {"cats": ["contact_lenses"], "prices": [499, 799, 1099], "weight": 0},
+}
+
+# Collections (for product naming)
+COLLECTIONS = {
+    "Vincent Chase": ["Air Wrap", "Poppin 2.0", "Float Pop", "Hip Hop", "Boost", "Crystal Clear"],
+    "John Jacobs": ["Coastline", "Rhapsody", "Roman Holiday", "Surrealist", "Art Deco"],
+    "Lenskart Air": ["Air Flex", "Air Prism", "Switch", "Ultra Light"],
+    "Lenskart Blu": ["Zero Power", "Screen Guard", "Blu Cut Pro"],
+    "Hooper": ["Daily Comfort", "Classic"],
+    "Hustlr": ["Street", "Sport Fit"],
+}
+
+FRAME_SHAPES = ["rectangle", "round", "aviator", "cat_eye", "wayfarer", "square", "clubmaster", "geometric", "hexagonal", "oval"]
+FRAME_TYPES = ["full_rim", "half_rim", "rimless"]
+FRAME_MATERIALS = ["metal", "acetate", "TR90", "titanium", "stainless_steel", "ultem", "mixed"]
+FRAME_COLORS = [
+    "black", "brown", "blue", "gold", "silver", "tortoise", "gunmetal", "transparent",
+    "red", "green", "rose_gold", "purple", "maroon", "white", "grey", "pink",
+]
+LENS_TYPES_EYEGLASSES = ["single_vision", "blue_cut", "photochromic", "progressive", "bifocal", "zero_power"]
+LENS_TYPES_SUNGLASSES = ["polarized", "mirrored", "gradient", "tinted", "photochromic"]
+LENS_TYPES_CL = ["spherical", "toric", "multifocal", "colored"]
+CL_DISPOSAL = ["daily", "monthly", "yearly"]
+SIZES = ["S", "M", "L", "XL"]
+GENDERS = ["M", "F", "Unisex", "Kids"]
 
 # Store clusters define demand profiles
 STORE_CLUSTERS = {
@@ -152,15 +199,19 @@ def generate_stores() -> list[dict]:
 
         store_format = {"METRO_HIGH": "large", "METRO_MID": "large", "TIER1_HIGH": "medium",
                         "TIER1_MID": "medium", "TIER2": "small", "KIOSK": "kiosk"}[cluster]
+        # Real Lenskart ownership: COCO (flagship) vs FOFO (franchise expansion)
+        ownership = "COCO" if cluster in ("METRO_HIGH", "METRO_MID") else (
+            "FOFO" if random.random() < 0.6 else "COCO"
+        )
 
         stores.append({
             "store_id": f"STR{i:04d}",
-            "store_name": f"Lenskart {city} {i}",
+            "store_name": f"Lenskart {city} {random.choice(['Mall', 'High Street', 'Hub', 'Express', 'Studio'])} {i}",
             "city": city,
             "state": state,
             "region": region,
             "pincode": f"{random.randint(100000, 999999)}",
-            "store_type": "company_owned" if i % 3 != 0 else "franchise",
+            "store_type": ownership,
             "store_format": store_format,
             "store_cluster": cluster,
             "latitude": round(base_lat + random.uniform(-0.05, 0.05), 6),
@@ -175,11 +226,11 @@ def generate_stores() -> list[dict]:
 
 def generate_vendors() -> list[dict]:
     vendor_specs = [
-        ("VND001", "Luxottica India", "manufacturer", 10, 50000, 100, 0.92),
-        ("VND002", "Titan Eyewear", "manufacturer", 7, 25000, 50, 0.95),
-        ("VND003", "Safilo Distribution", "distributor", 5, 15000, 25, 0.88),
-        ("VND004", "Shenzhen Optics Co", "manufacturer", 21, 100000, 500, 0.78),
-        ("VND005", "Local Lens Crafters", "manufacturer", 3, 5000, 10, 0.96),
+        ("VND001", "Lenskart Manufacturing (In-house)", "manufacturer", 5, 25000, 50, 0.96),
+        ("VND002", "EssilorLuxottica India", "manufacturer", 10, 50000, 100, 0.92),
+        ("VND003", "Titan Eyeplus", "manufacturer", 7, 25000, 50, 0.94),
+        ("VND004", "Shenzhen Hongyi Optics", "manufacturer", 21, 100000, 500, 0.78),
+        ("VND005", "Bausch & Lomb India", "manufacturer", 8, 15000, 200, 0.91),
     ]
     vendors = []
     for vid, name, vtype, lt, mov, moq, reliability in vendor_specs:
@@ -204,11 +255,23 @@ def generate_skus(vendors: list[dict]) -> list[dict]:
     skus = []
     vendor_ids = [v["vendor_id"] for v in vendors]
 
+    # Build weighted brand list for realistic distribution
+    brand_weights = []
+    brand_names = []
+    for b, cfg in BRAND_CONFIG.items():
+        brand_names.append(b)
+        brand_weights.append(cfg["weight"])
+
     for i in range(1, NUM_SKUS + 1):
-        r = random.random()
-        if r < 0.60:
-            category = "eyeglasses"
-            if random.random() < 0.70:
+        # Pick brand first (weighted by market share), then derive category
+        brand = random.choices(brand_names, weights=brand_weights)[0]
+        cfg = BRAND_CONFIG[brand]
+        category = random.choice(cfg["cats"])
+        mrp = random.choice(cfg["prices"])
+
+        # Map category → subcategory, sku_type, fulfillment
+        if category in ("eyeglasses", "computer_glasses"):
+            if random.random() < 0.65:
                 sku_type = "display_dummy"
                 fulfillment_type = "order_capture"
                 is_display_only = True
@@ -216,37 +279,89 @@ def generate_skus(vendors: list[dict]) -> list[dict]:
                 sku_type = "physical_sell"
                 fulfillment_type = "direct_sell"
                 is_display_only = False
-            sales_channel = "prescription"
-        elif r < 0.85:
-            category = "sunglasses"
+            sales_channel = "prescription" if category == "eyeglasses" else "walk_in"
+        elif category == "sunglasses":
             sku_type = "physical_sell"
             fulfillment_type = "direct_sell"
             is_display_only = False
             sales_channel = "walk_in"
-        else:
-            category = "contact_lenses"
+        else:  # contact_lenses
             sku_type = "physical_sell"
             fulfillment_type = "direct_sell"
             is_display_only = False
             sales_channel = "prescription"
 
-        brand = random.choice(BRANDS)
-        mrp = random.choice([499, 799, 999, 1299, 1599, 1999, 2499, 2999, 3999, 4999, 5999, 7999])
-        lifecycle = random.choices(["new", "active", "aging", "eol"], weights=[0.10, 0.55, 0.25, 0.10])[0]
+        lifecycle = random.choices(["new", "active", "aging", "eol"], weights=[0.12, 0.55, 0.23, 0.10])[0]
+
+        # Realistic product naming with collections
+        collection = ""
+        if brand in COLLECTIONS:
+            collection = random.choice(COLLECTIONS[brand]) + " "
+
+        if category == "contact_lenses":
+            disposal = random.choice(CL_DISPOSAL)
+            lens_type = random.choice(LENS_TYPES_CL)
+            product_name = f"{brand} {collection}{disposal.title()} {lens_type.title()} {random.choice(FRAME_COLORS).title()}"
+            frame_type = None
+            frame_shape = None
+            frame_material = None
+            frame_color = None
+        elif category == "sunglasses":
+            lens_type = random.choice(LENS_TYPES_SUNGLASSES)
+            shape = random.choice(FRAME_SHAPES)
+            color = random.choice(FRAME_COLORS)
+            frame_type = random.choice(FRAME_TYPES)
+            frame_shape = shape
+            frame_material = random.choice(FRAME_MATERIALS)
+            frame_color = color
+            product_name = f"{brand} {collection}{shape.replace('_', ' ').title()} {color.replace('_', ' ').title()}"
+        else:  # eyeglasses, computer_glasses
+            lens_type = random.choice(LENS_TYPES_EYEGLASSES)
+            shape = random.choice(FRAME_SHAPES)
+            color = random.choice(FRAME_COLORS)
+            frame_type = random.choice(FRAME_TYPES)
+            frame_shape = shape
+            frame_material = random.choice(FRAME_MATERIALS)
+            frame_color = color
+            product_name = f"{brand} {collection}{shape.replace('_', ' ').title()} {color.replace('_', ' ').title()}"
+
+        # Vendor assignment: in-house brands → VND001, premium → VND002, CL → VND005
+        if brand in ("Vincent Chase", "Lenskart Air", "Lenskart Blu", "Hooper", "Hustlr"):
+            vendor_id = "VND001"  # In-house manufacturing
+        elif brand in ("Ray-Ban", "Oakley", "Carrera", "Tommy Hilfiger", "Owndays"):
+            vendor_id = "VND002"  # EssilorLuxottica
+        elif brand in ("Bausch & Lomb", "Acuvue", "Alcon", "CooperVision"):
+            vendor_id = "VND005"  # B&L India
+        elif category == "contact_lenses":
+            vendor_id = random.choice(["VND005", "VND003"])
+        else:
+            vendor_id = random.choice(vendor_ids)
+
+        # Subcategory with price tier
+        if mrp >= 5000:
+            subcategory = f"{category}_premium"
+        elif mrp >= 2000:
+            subcategory = f"{category}_mid"
+        else:
+            subcategory = f"{category}_value"
+
+        gender = random.choice(GENDERS)
+        if brand == "Aquacolor":
+            gender = random.choice(["F", "Unisex"])  # Colored lenses skew female
 
         skus.append({
             "sku_id": f"SKU{i:05d}",
-            "product_name": f"{brand} {random.choice(FRAME_SHAPES).title()} {random.choice(FRAME_COLORS).title()} {i}",
+            "product_name": product_name,
             "brand": brand,
             "category": category,
-            "subcategory": f"{category}_premium" if mrp >= 2999 else f"{category}_value",
+            "subcategory": subcategory,
             "sku_type": sku_type,
-            "gender": random.choice(GENDERS),
-            "frame_type": random.choice(["full_rim", "half_rim", "rimless"]) if category != "contact_lenses" else None,
-            "frame_shape": random.choice(FRAME_SHAPES) if category != "contact_lenses" else None,
-            "frame_material": random.choice(FRAME_MATERIALS) if category != "contact_lenses" else None,
-            "frame_color": random.choice(FRAME_COLORS) if category != "contact_lenses" else None,
-            "lens_type": random.choice(LENS_TYPES),
+            "gender": gender,
+            "frame_type": frame_type,
+            "frame_shape": frame_shape,
+            "frame_material": frame_material,
+            "frame_color": frame_color,
+            "lens_type": lens_type,
             "size": random.choice(SIZES),
             "mrp": mrp,
             "cost_price": round(mrp * random.uniform(0.25, 0.45), 2),
@@ -254,7 +369,7 @@ def generate_skus(vendors: list[dict]) -> list[dict]:
             "sales_channel": sales_channel,
             "is_display_only": is_display_only,
             "lifecycle_stage": lifecycle,
-            "vendor_id": random.choice(vendor_ids),
+            "vendor_id": vendor_id,
             "lead_time_days": random.choice([3, 5, 7, 10, 14, 21]),
             "launch_date": (START_DATE - timedelta(days=random.randint(0, 730))).isoformat(),
         })
@@ -288,7 +403,7 @@ SALES_FIELDS = ["store_id", "sku_id", "sale_date", "qty_sold", "revenue", "disco
 
 def generate_daily_sales_streaming(stores: list[dict], skus: list[dict]):
     """Stream daily sales directly to CSV to avoid OOM."""
-    eyeglass_skus = [s for s in skus if s["category"] == "eyeglasses" and not s["is_display_only"]]
+    eyeglass_skus = [s for s in skus if s["category"] in ("eyeglasses", "computer_glasses") and not s["is_display_only"]]
     sunglass_skus = [s for s in skus if s["category"] == "sunglasses"]
     cl_skus = [s for s in skus if s["category"] == "contact_lenses"]
     display_skus = [s for s in skus if s["is_display_only"]]
