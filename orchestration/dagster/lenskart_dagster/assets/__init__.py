@@ -248,9 +248,35 @@ def replenishment_plan(context: AssetExecutionContext) -> Output:
 
 @asset(group_name="optimization", deps=[demand_forecast, store_clustering], description="Generate assortment plan")
 def assortment_plan(context: AssetExecutionContext) -> Output:
-    """Generate assortment optimization recommendations."""
-    # TODO: Wire to services/assortment
-    return Output(value={"status": "placeholder", "recommendations": 0})
+    """Generate assortment optimization recommendations for all stores."""
+    import sys
+    sys.path.insert(0, PROJECT_ROOT)
+
+    from services.assortment.config import AssortmentConfig
+    from services.assortment.pipeline import run_assortment_pipeline
+
+    config = AssortmentConfig(db_path=os.path.join(DATA_DIR, "dev.duckdb"))
+    results = run_assortment_pipeline(config, write_to_db=True)
+
+    n_stores = len(results)
+    n_optimal = sum(1 for r in results if r.status == "optimal")
+    total_selected = sum(len(r.selected_skus) for r in results)
+    total_obj = sum(r.objective_value for r in results)
+
+    context.log.info(
+        f"Assortment: {n_stores} stores optimized, "
+        f"{n_optimal} optimal, {total_selected} SKUs selected"
+    )
+
+    return Output(
+        value={"status": "success", "stores_optimized": n_stores},
+        metadata={
+            "n_stores": n_stores,
+            "n_optimal": n_optimal,
+            "total_selected": total_selected,
+            "total_objective": float(total_obj),
+        },
+    )
 
 
 @asset(group_name="optimization", deps=[demand_forecast], description="Generate transfer plan")

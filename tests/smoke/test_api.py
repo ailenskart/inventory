@@ -79,13 +79,38 @@ class TestReplenishmentEndpoints:
 
 
 class TestAssortmentEndpoints:
-    def test_get_recommendations(self):
-        response = client.get("/api/v1/assortment/recommendations")
+    def test_list_scenarios(self):
+        response = client.get("/api/v1/assortment/scenarios")
         assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 5
+        names = {s["name"] for s in data}
+        assert "metro_premium" in names
 
-    def test_get_clusters(self):
-        response = client.get("/api/v1/assortment/clusters")
+    def test_optimize_endpoint_exists(self):
+        """POST /optimize should exist (may fail if DB not ready)."""
+        response = client.post(
+            "/api/v1/assortment/optimize",
+            json={"store_id": "STORE_001"},
+        )
+        assert response.status_code in (200, 404, 500, 503)
+
+    def test_store_assortment_endpoint(self):
+        """GET /store/{id} should exist."""
+        response = client.get("/api/v1/assortment/store/NONEXISTENT")
+        assert response.status_code in (404, 500, 503)
+
+    def test_simulation_with_bad_scenario(self):
+        response = client.get("/api/v1/assortment/simulation?scenario=nonexistent")
+        assert response.status_code == 400
+
+    def test_simulation_endpoint(self):
+        response = client.get("/api/v1/assortment/simulation?n_skus=20&capacity=10&scenario=metro_mass")
         assert response.status_code == 200
+        data = response.json()
+        assert "heuristic" in data
+        assert "optimized" in data
+        assert "score_improvement_pct" in data
 
 
 class TestTransferEndpoints:

@@ -1,4 +1,4 @@
-.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data test-integration generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline forecast-train forecast-predict forecast-evaluate replenishment-run replenishment-simulate
+.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data test-integration generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline forecast-train forecast-predict forecast-evaluate replenishment-run replenishment-simulate assortment-optimize assortment-simulate
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -90,6 +90,14 @@ replenishment-run: ## Run daily replenishment pipeline
 
 replenishment-simulate: ## Simulate daily vs weekly replenishment
 	python -m services.replenishment.simulation --weeks 12
+
+# ─── Assortment ────────────────────────────────────────────────────────────
+
+assortment-optimize: ## Run assortment optimization pipeline
+	python -m services.assortment.pipeline
+
+assortment-simulate: ## Simulate heuristic vs optimized assortment
+	python -m services.assortment.simulation --capacity 80 --n-skus 200
 
 # ─── Cleanup ─────────────────────────────────────────────────────────────────
 
