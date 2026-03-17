@@ -135,6 +135,35 @@ demo-e2e: ## Run end-to-end demo script (all modules)
 demo-e2e-quick: ## Run e2e demo skipping data foundation (requires prior make dbt-full)
 	python scripts/demo_e2e.py --skip-data-foundation
 
+# ─── Production Deployment ───────────────────────────────────────────────────
+
+prod-setup: ## First-time production server setup
+	./scripts/deploy.sh setup
+
+prod-start: ## Start all production services
+	./scripts/deploy.sh start
+
+prod-stop: ## Stop all production services
+	./scripts/deploy.sh stop
+
+prod-restart: ## Restart API + Dagster (keep infra running)
+	./scripts/deploy.sh restart
+
+prod-status: ## Show production service status
+	./scripts/deploy.sh status
+
+prod-logs: ## Tail production API logs
+	./scripts/deploy.sh logs api
+
+prod-ssl: ## Set up SSL (usage: make prod-ssl DOMAIN=retail.example.com)
+	./scripts/deploy.sh ssl $(DOMAIN)
+
+prod-update: ## Pull latest code and redeploy
+	./scripts/deploy.sh update
+
+prod-build: ## Build production Docker image only
+	docker compose -f docker-compose.prod.yml build
+
 # ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 clean: ## Clean generated files

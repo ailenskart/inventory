@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.mypy_cache
+.pytest_cache
+.ruff_cache
+*.egg-info
+
+# Dev
+.env
+.env.*
+!.env.example
+.venv
+venv
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Data (generated at runtime by bootstrap)
+data/dev.duckdb
+data/synthetic/*.csv
+transform/dbt/seeds/*.csv
+transform/dbt/target
+transform/dbt/dbt_packages
+transform/dbt/logs
+
+# Docker
+docker-compose.prod.yml
+Dockerfile
+
+# Docs
+docs/
+*.md
+
+# Tests (not needed in production image)
+tests/
+
+# Infra configs (mounted as volumes, not baked in)
+infra/nginx/
+infra/dagster/
