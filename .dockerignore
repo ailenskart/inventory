@@ -24,25 +24,20 @@ venv
 *.swp
 *.swo
 
-# Data (generated at runtime by bootstrap)
+# Generated data (will be created at runtime)
 data/dev.duckdb
-data/synthetic/*.csv
-transform/dbt/seeds/*.csv
+
+# dbt build artifacts (regenerated at runtime)
 transform/dbt/target
 transform/dbt/dbt_packages
 transform/dbt/logs
 
 # Docker
 docker-compose.prod.yml
-Dockerfile
 
-# Docs
-docs/
-*.md
-
-# Tests (not needed in production image)
+# Tests
 tests/
 
-# Infra configs (mounted as volumes, not baked in)
+# Infra configs (for docker-compose only)
 infra/nginx/
 infra/dagster/
