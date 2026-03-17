@@ -11,11 +11,69 @@ macro-paths: ["macros"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+seeds:
+  lenskart_retail:
+    +schema: raw
+    vendors:
+      +column_types:
+        contact_phone: varchar
+        min_order_value: double
+        min_order_qty: integer
+        avg_lead_time_days: integer
+    stores:
+      +column_types:
+        pincode: varchar
+        display_capacity: integer
+        storage_capacity: integer
+    skus:
+      +column_types:
+        mrp: double
+        cost_price: double
+        lead_time_days: integer
+    daily_sales:
+      +column_types:
+        qty_sold: integer
+        revenue: double
+        discount: double
+    daily_inventory:
+      +column_types:
+        on_hand_qty: integer
+        on_display_qty: integer
+        in_storage_qty: integer
+        in_transit_qty: integer
+        allocated_qty: integer
+        available_qty: integer
+    receipts:
+      +column_types:
+        qty_received: integer
+    transfers:
+      +column_types:
+        transfer_qty: integer
+    purchase_orders:
+      +column_types:
+        total_qty: integer
+        total_value: double
+        num_lines: integer
+    store_traffic:
+      +column_types:
+        footfall_count: integer
+        walk_ins: integer
+        appointments: integer
+    eye_tests:
+      +column_types:
+        sph_right: double
+        cyl_right: double
+        sph_left: double
+        cyl_left: double
+
 models:
   lenskart_retail:
     staging:
       +schema: staging
       +materialized: view
+    dimensions:
+      +schema: dimensions
+      +materialized: table
     intermediate:
       +schema: intermediate
       +materialized: table

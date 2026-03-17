@@ -1,0 +1,138 @@
+version: 2
+
+models:
+  - name: stg_sales_daily
+    description: >
+      Cleaned daily sales with semantic demand signals.
+      sell_through_signal = physical product sold from stock.
+      prescription_order_signal = order captured via display dummy frame.
+    columns:
+      - name: store_id
+        description: "Store identifier"
+        tests: [not_null]
+      - name: sku_id
+        description: "SKU identifier"
+        tests: [not_null]
+      - name: sale_date
+        description: "Date of sale"
+        tests: [not_null]
+      - name: qty_sold
+        description: "Quantity sold (always >= 0)"
+        tests: [not_null]
+      - name: fulfillment_type
+        description: "How the sale is fulfilled"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['direct_sell', 'order_capture']
+      - name: sales_channel
+        description: "Customer acquisition channel"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['prescription', 'walk_in']
+
+  - name: stg_inventory_daily
+    description: >
+      Daily inventory snapshots. Display-only SKUs have available_qty=0.
+      Physical-sell SKUs fluctuate with sales and receipts.
+    columns:
+      - name: store_id
+        tests: [not_null]
+      - name: sku_id
+        tests: [not_null]
+      - name: snapshot_date
+        tests: [not_null]
+      - name: on_hand_qty
+        description: "Total on-hand. Should be >= 0 for normal operations."
+        tests: [not_null]
+
+  - name: stg_receipts_daily
+    description: "Goods received at stores from warehouses, vendors, or transfers."
+    columns:
+      - name: receipt_id
+        tests: [not_null, unique]
+      - name: store_id
+        tests: [not_null]
+      - name: sku_id
+        tests: [not_null]
+      - name: receipt_date
+        tests: [not_null]
+      - name: qty_received
+        description: "Must be positive"
+        tests: [not_null]
+      - name: source_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['warehouse', 'vendor_direct', 'transfer']
+
+  - name: stg_transfers_daily
+    description: >
+      Inter-store transfers. Each transfer_id has a paired out/in row.
+      transfer_out qty must eventually balance transfer_in qty.
+    columns:
+      - name: transfer_id
+        tests: [not_null]
+      - name: transfer_direction
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['out', 'in']
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['received', 'in_transit', 'cancelled']
+
+  - name: stg_trials_daily
+    description: >
+      Try-on events (display_interest_signal). Primary demand signal
+      for dummy display frames. High trial count = high frame interest.
+    columns:
+      - name: trial_id
+        tests: [not_null, unique]
+      - name: store_id
+        tests: [not_null]
+      - name: sku_id
+        tests: [not_null]
+      - name: trial_date
+        tests: [not_null]
+
+  - name: stg_eye_tests_daily
+    description: >
+      Eye examination events (prescription_order_signal). ~75% convert
+      to an eyeglass purchase. Strong proxy for prescription demand.
+    columns:
+      - name: test_id
+        tests: [not_null, unique]
+      - name: store_id
+        tests: [not_null]
+      - name: test_date
+        tests: [not_null]
+
+  - name: stg_purchase_orders
+    description: "Purchase orders to vendors with delivery tracking."
+    columns:
+      - name: po_id
+        tests: [not_null, unique]
+      - name: vendor_id
+        tests: [not_null]
+      - name: order_date
+        tests: [not_null]
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['draft', 'submitted', 'approved', 'in_transit', 'received', 'cancelled']
+
+  - name: stg_store_traffic_daily
+    description: "Daily footfall per store. Contextualizes conversion rates."
+    columns:
+      - name: store_id
+        tests: [not_null]
+      - name: traffic_date
+        tests: [not_null]
+      - name: footfall_count
+        description: "Must be positive"
+        tests: [not_null]

@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: mart_demand_base
+    description: >
+      Weekly demand dataset at SKU × Store × Week granularity.
+      Primary input to ML forecasting. Contains three demand signals:
+      sell_through_signal (physical sales), prescription_order_signal
+      (display frame orders), display_interest_signal (try-ons).
+    columns:
+      - name: store_id
+        tests: [not_null]
+      - name: sku_id
+        tests: [not_null]
+      - name: week_start
+        tests: [not_null]
+      - name: total_qty_sold
+        description: "Total units across all channels"
+      - name: sell_through_signal
+        description: "Physical units sold from store stock"
+      - name: prescription_order_signal
+        description: "Orders captured via display dummy frames"
+      - name: display_interest_signal
+        description: "Try-on events — leading demand indicator for display frames"
+      - name: store_cluster
+        tests:
+          - accepted_values:
+              values: ['METRO_HIGH', 'METRO_MID', 'TIER1_HIGH', 'TIER1_MID', 'TIER2', 'KIOSK']
+              config:
+                where: "store_cluster is not null"
+      - name: sku_type
+        tests:
+          - accepted_values:
+              values: ['display_dummy', 'physical_sell']
+              config:
+                where: "sku_type is not null"
+
+  - name: mart_inventory_position
+    description: >
+      Current inventory health at SKU × Store. Combines latest inventory
+      snapshot with sales velocity for weeks-of-supply and health classification.
+    columns:
+      - name: store_id
+        tests: [not_null]
+      - name: sku_id
+        tests: [not_null]
+      - name: inventory_status
+        description: "Health classification"
+        tests:
+          - accepted_values:
+              values: ['stockout', 'stockout_pending_receipt', 'critical', 'low', 'healthy', 'excess', 'dead_stock']
+
+  - name: mart_vendor_performance
+    description: "Vendor scorecard with PO delivery, portfolio health, and revenue contribution."
+    columns:
+      - name: vendor_id
+        tests: [not_null, unique]

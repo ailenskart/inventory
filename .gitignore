@@ -29,3 +29,6 @@ dbt_packages/
 logs/
 data/synthetic/*.csv
 !data/synthetic/.gitkeep
+data/dev.duckdb
+transform/dbt/seeds/*.csv
+!transform/dbt/seeds/.gitkeep

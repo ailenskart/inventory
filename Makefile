@@ -1,4 +1,4 @@
-.PHONY: help bootstrap install lint type-check test test-unit test-smoke generate-data api docker-up docker-down clean
+.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -16,16 +16,46 @@ lint: ## Run linter (ruff)
 type-check: ## Run type checker (mypy)
 	mypy apps/ services/ schemas/ ml/ --ignore-missing-imports
 
+# ─── Testing ─────────────────────────────────────────────────────────────────
+
 test: test-unit test-smoke ## Run all tests
 
 test-unit: ## Run unit tests
 	pytest tests/unit -v -m "not integration"
 
-test-smoke: ## Run smoke tests
+test-smoke: ## Run smoke tests (API + data)
 	pytest tests/smoke -v
 
-generate-data: ## Generate synthetic datasets
+test-data: ## Run data foundation tests (generate → dbt → validate)
+	pytest tests/smoke/test_data_foundation.py -v
+
+# ─── Data Foundation ─────────────────────────────────────────────────────────
+
+generate-data: ## Generate synthetic datasets (50 stores, 1000 SKUs, 365 days)
 	python data/synthetic/generate.py
+
+load-seeds: ## Copy synthetic CSVs to dbt seeds directory
+	python data/load_seeds.py
+
+dbt-seed: ## Load seed CSVs into DuckDB via dbt
+	cd transform/dbt && dbt seed --profiles-dir . --full-refresh
+
+dbt-run: ## Run all dbt models (staging → dims → intermediate → marts)
+	cd transform/dbt && dbt run --profiles-dir .
+
+dbt-test: ## Run dbt schema + custom tests
+	cd transform/dbt && dbt test --profiles-dir .
+
+dbt-full: generate-data load-seeds dbt-seed dbt-run dbt-test ## Full dbt pipeline end-to-end
+	@echo "✓ Data foundation pipeline complete."
+
+validate-data: ## Run data validation checks against DuckDB
+	python data/validate.py
+
+data-pipeline: dbt-full validate-data ## Full data pipeline + validation
+	@echo "✓ Data pipeline + validation complete."
+
+# ─── Services ────────────────────────────────────────────────────────────────
 
 api: ## Start FastAPI development server
 	uvicorn apps.api.app.main:app --reload --host 0.0.0.0 --port 8000
@@ -36,22 +66,19 @@ docker-up: ## Start infrastructure (Postgres, MLflow, MinIO)
 docker-down: ## Stop infrastructure
 	docker compose -f infra/docker/docker-compose.yml down
 
-dbt-run: ## Run dbt models
-	cd transform/dbt && dbt run --profiles-dir .
-
-dbt-test: ## Run dbt tests
-	cd transform/dbt && dbt test --profiles-dir .
-
 dagster-dev: ## Start Dagster dev UI
 	dagster dev -m orchestration.dagster.lenskart_dagster.definitions
 
+# ─── Cleanup ─────────────────────────────────────────────────────────────────
+
 clean: ## Clean generated files
 	rm -rf data/synthetic/*.csv data/dev.duckdb
-	rm -rf transform/dbt/target transform/dbt/dbt_packages
+	rm -rf transform/dbt/seeds/*.csv
+	rm -rf transform/dbt/target transform/dbt/dbt_packages transform/dbt/logs
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
 
-demo: bootstrap ## Run full demo: generate data, run tests, start API
+demo: bootstrap dbt-full validate-data ## Full demo: bootstrap → dbt pipeline → validate → API
 	@echo "\n=== Running tests ==="
 	$(MAKE) test
 	@echo "\n=== Starting API server ==="

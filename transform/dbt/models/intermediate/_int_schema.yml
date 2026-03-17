@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_sku_store_daily
+    description: >
+      Central daily fact table at SKU × Store granularity.
+      Joins sales, trials (display_interest_signal), eye tests
+      (prescription_order_signal), inventory, and traffic into a
+      single spine. Foundation for all downstream marts and ML.
+    columns:
+      - name: store_id
+        tests: [not_null]
+      - name: sku_id
+        tests: [not_null]
+      - name: day_date
+        tests: [not_null]
+      - name: qty_sold
+        description: "Total units sold (sell-through + order capture)"
+      - name: sell_through_signal
+        description: "Units physically sold from store stock (sunglasses, last-piece eyeglasses)"
+      - name: prescription_order_signal
+        description: "Orders captured via display dummy frames (prescription eyewear)"
+      - name: display_interest_signal
+        description: "Try-on count — demand signal for display frames regardless of purchase"
+      - name: prescription_signal_eye_tests
+        description: "Eye tests at store level — proxy for prescription eyewear demand"
