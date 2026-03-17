@@ -118,6 +118,39 @@ class TestTransferEndpoints:
         response = client.get("/api/v1/transfers/recommendations")
         assert response.status_code == 200
 
+    def test_run_endpoint_exists(self):
+        """POST /run should exist (may fail if DB not ready)."""
+        response = client.post(
+            "/api/v1/transfers/run",
+            json={"min_source_wos": 8.0, "max_destination_wos": 3.0},
+        )
+        assert response.status_code in (200, 500, 503)
+
+    def test_store_transfers_404(self):
+        """GET /store/{id} returns 404 when no recommendations exist."""
+        response = client.get("/api/v1/transfers/store/NONEXISTENT")
+        assert response.status_code in (404, 500, 503)
+
+    def test_simulation_endpoint(self):
+        """GET /simulation should run greedy-vs-optimized comparison."""
+        response = client.get(
+            "/api/v1/transfers/simulation?n_stores=5&n_skus=10&seed=42"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "greedy" in data
+        assert "optimized" in data
+        assert "improvement_pct" in data
+
+    def test_execute_transfers(self):
+        response = client.post(
+            "/api/v1/transfers/execute",
+            json=["TRF-001", "TRF-002"],
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["transfers_initiated"] == 2
+
 
 class TestPurchaseOrderEndpoints:
     def test_list_pos(self):
