@@ -74,7 +74,18 @@
   <!-- Nav -->
   <nav class="flex-1 py-4 overflow-y-auto">
     <div class="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Main</div>
-    <template x-for="item in navItems" :key="item.id">
+    <template x-for="item in navItems.slice(0,8)" :key="item.id">
+      <button
+        @click="currentPage = item.id; loadPage(item.id)"
+        :class="currentPage === item.id ? 'active' : ''"
+        class="sidebar-item w-full flex items-center gap-3 px-6 py-3 text-sm text-gray-300 cursor-pointer"
+      >
+        <span x-html="item.icon" class="w-5 h-5"></span>
+        <span x-text="item.label"></span>
+      </button>
+    </template>
+    <div class="px-4 mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</div>
+    <template x-for="item in navItems.slice(8)" :key="item.id">
       <button
         @click="currentPage = item.id; loadPage(item.id)"
         :class="currentPage === item.id ? 'active' : ''"
@@ -585,6 +596,279 @@
     </div>
   </div>
 
+  <!-- Product Catalog Page -->
+  <div x-show="!loading && currentPage === 'catalog'" class="p-8">
+    <!-- Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" x-show="catalogStats">
+      <div class="card stat-card p-6">
+        <div class="text-sm text-gray-400">Total Products</div>
+        <div class="text-3xl font-bold mt-2" x-text="catalogStats?.skus?.total || 0"></div>
+        <div class="text-sm text-gray-400 mt-1"><span x-text="catalogStats?.skus?.categories || 0"></span> categories, <span x-text="catalogStats?.skus?.brands || 0"></span> brands</div>
+      </div>
+      <div class="card stat-card p-6">
+        <div class="text-sm text-gray-400">Avg MRP</div>
+        <div class="text-3xl font-bold mt-2" x-text="'₹' + (catalogStats?.skus?.avg_mrp || 0).toLocaleString()"></div>
+      </div>
+      <div class="card stat-card p-6">
+        <div class="text-sm text-gray-400">Total Stores</div>
+        <div class="text-3xl font-bold mt-2" x-text="catalogStats?.stores?.total || 0"></div>
+        <div class="text-sm text-gray-400 mt-1"><span x-text="catalogStats?.stores?.cities || 0"></span> cities, <span x-text="catalogStats?.stores?.regions || 0"></span> regions</div>
+      </div>
+      <div class="card stat-card p-6">
+        <div class="text-sm text-gray-400">Inventory</div>
+        <div class="text-3xl font-bold mt-2" x-text="(catalogStats?.inventory?.total_on_hand || 0).toLocaleString()"></div>
+        <div class="text-sm text-gray-400 mt-1">units across <span x-text="catalogStats?.inventory?.positions || 0"></span> positions</div>
+      </div>
+    </div>
+
+    <!-- Category & Brand breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" x-show="catalogStats">
+      <div class="card p-6">
+        <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
+        <template x-for="[cat, count] in Object.entries(catalogStats?.category_breakdown || {})" :key="cat">
+          <div class="flex items-center justify-between py-2 border-b border-gray-800">
+            <span class="capitalize" x-text="cat.replace(/_/g, ' ')"></span>
+            <div class="flex items-center gap-3">
+              <div class="w-32 h-2 bg-gray-700 rounded-full"><div class="h-2 rounded-full bg-indigo-400" :style="'width:'+Math.min(100, count / (catalogStats?.skus?.total || 1) * 100)+'%'"></div></div>
+              <span class="text-sm font-semibold w-10 text-right" x-text="count"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-lg font-semibold mb-4">Brand Breakdown</h3>
+        <template x-for="[brand, count] in Object.entries(catalogStats?.brand_breakdown || {}).slice(0,10)" :key="brand">
+          <div class="flex items-center justify-between py-2 border-b border-gray-800">
+            <span x-text="brand"></span>
+            <div class="flex items-center gap-3">
+              <div class="w-32 h-2 bg-gray-700 rounded-full"><div class="h-2 rounded-full bg-green-400" :style="'width:'+Math.min(100, count / (catalogStats?.skus?.total || 1) * 100)+'%'"></div></div>
+              <span class="text-sm font-semibold w-10 text-right" x-text="count"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-6 border-b border-gray-700">
+      <button @click="catalogTab='products'" :class="catalogTab==='products'?'tab-active':''" class="pb-3 px-4 text-sm font-semibold text-gray-400">Products</button>
+      <button @click="catalogTab='stores'" :class="catalogTab==='stores'?'tab-active':''" class="pb-3 px-4 text-sm font-semibold text-gray-400">Stores</button>
+      <button @click="catalogTab='vendors'" :class="catalogTab==='vendors'?'tab-active':''" class="pb-3 px-4 text-sm font-semibold text-gray-400">Vendors</button>
+    </div>
+
+    <!-- Products tab -->
+    <div x-show="catalogTab==='products'">
+      <div class="card p-6 mb-4">
+        <div class="flex items-center gap-4">
+          <select x-model="catalogCategory" @change="loadCatalogProducts()" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+            <option value="">All Categories</option>
+            <template x-for="cat in Object.keys(catalogStats?.category_breakdown || {})" :key="cat">
+              <option :value="cat" x-text="cat"></option>
+            </template>
+          </select>
+          <select x-model="catalogBrand" @change="loadCatalogProducts()" class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none">
+            <option value="">All Brands</option>
+            <template x-for="brand in Object.keys(catalogStats?.brand_breakdown || {})" :key="brand">
+              <option :value="brand" x-text="brand"></option>
+            </template>
+          </select>
+          <span class="text-sm text-gray-400" x-text="catalogProducts.length + ' products shown'"></span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <template x-for="p in catalogProducts.slice(0,60)" :key="p.sku_id">
+          <div class="card p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <div class="font-mono text-xs text-indigo-400" x-text="p.sku_id"></div>
+                <div class="font-semibold text-sm mt-1" x-text="p.brand + ' ' + (p.frame_shape || '')"></div>
+              </div>
+              <span class="badge" :class="p.category==='eyeglasses'?'badge-info':p.category==='sunglasses'?'badge-warning':p.category==='contact_lenses'?'badge-success':'badge-purple'" x-text="p.category"></span>
+            </div>
+            <div class="space-y-1 text-xs text-gray-400">
+              <div class="flex justify-between"><span>MRP</span><span class="text-white font-semibold" x-text="'₹' + (p.mrp||0).toLocaleString()"></span></div>
+              <div class="flex justify-between"><span>Material</span><span x-text="p.frame_material || '—'"></span></div>
+              <div class="flex justify-between"><span>Gender</span><span x-text="p.gender || '—'"></span></div>
+              <div class="flex justify-between"><span>Size</span><span x-text="p.size || '—'"></span></div>
+              <div class="flex justify-between"><span>Lens</span><span x-text="p.lens_type || '—'"></span></div>
+              <div class="flex justify-between"><span>Lifecycle</span><span class="badge badge-purple text-xs" x-text="p.lifecycle_stage || '—'"></span></div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Stores tab -->
+    <div x-show="catalogTab==='stores'">
+      <div class="overflow-x-auto card p-6">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">Store ID</th><th class="pb-3">City</th><th class="pb-3">State</th><th class="pb-3">Region</th><th class="pb-3">Cluster</th><th class="pb-3">Format</th><th class="pb-3">Capacity</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="s in catalogStores" :key="s.store_id">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2 font-mono text-xs text-indigo-400" x-text="s.store_id"></td>
+                <td class="py-2" x-text="s.city"></td>
+                <td class="py-2 text-gray-400" x-text="s.state"></td>
+                <td class="py-2" x-text="s.region"></td>
+                <td class="py-2"><span class="badge badge-info" x-text="s.cluster || s.store_cluster"></span></td>
+                <td class="py-2" x-text="s.store_format || s.format || '—'"></td>
+                <td class="py-2 font-semibold" x-text="s.capacity || s.display_capacity || '—'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vendors tab -->
+    <div x-show="catalogTab==='vendors'">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="v in catalogVendors" :key="v.vendor_id">
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <div class="font-semibold" x-text="v.vendor_name || v.name"></div>
+                <div class="text-xs text-gray-400" x-text="v.vendor_id"></div>
+              </div>
+            </div>
+            <div class="space-y-2 text-sm">
+              <template x-for="[k,val] in Object.entries(v).filter(([k]) => !['vendor_id','vendor_name','name'].includes(k)).slice(0,8)" :key="k">
+                <div class="flex justify-between"><span class="text-gray-400 capitalize" x-text="k.replace(/_/g,' ')"></span><span x-text="typeof val === 'number' ? (val < 1 && val > 0 ? (val*100).toFixed(0)+'%' : val.toLocaleString()) : val"></span></div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Upload Page -->
+  <div x-show="!loading && currentPage === 'data-upload'" class="p-8">
+    <div class="card p-6 mb-6">
+      <h3 class="text-lg font-semibold mb-2">Upload CSV Data</h3>
+      <p class="text-sm text-gray-400 mb-4">Upload CSV files to populate or update your data tables. Choose append to add rows, or replace to overwrite the table.</p>
+      <div x-show="uploadMsg" class="mb-4 p-3 rounded-lg text-sm" :class="uploadMsg.startsWith('Error') || uploadMsg.startsWith('Upload failed') ? 'bg-red-500 bg-opacity-15 text-red-400' : 'bg-green-500 bg-opacity-15 text-green-400'" x-text="uploadMsg"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <template x-for="t in uploadTargets" :key="t.name">
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold capitalize" x-text="t.name.replace(/_/g, ' ')"></h4>
+            <span class="text-xs text-gray-500" x-text="t.schema + '.' + t.table"></span>
+          </div>
+          <div class="mb-3 text-xs text-gray-400 max-h-20 overflow-y-auto">
+            <span class="font-semibold text-gray-300">Columns: </span>
+            <span x-text="t.columns.join(', ')"></span>
+          </div>
+          <div class="space-y-2">
+            <input type="file" accept=".csv" :id="'file-'+t.name" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-indigo-500 file:text-white hover:file:bg-indigo-400 w-full">
+            <div class="flex gap-2">
+              <button @click="uploadFile(t.name, document.getElementById('file-'+t.name), 'append')" :disabled="uploadLoading" class="btn-primary text-xs flex-1">Append</button>
+              <button @click="uploadFile(t.name, document.getElementById('file-'+t.name), 'replace')" :disabled="uploadLoading" class="btn-outline text-xs flex-1">Replace</button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div x-show="!uploadTargets.length" class="card p-12 text-center text-gray-500">
+      <p>Loading upload targets...</p>
+    </div>
+  </div>
+
+  <!-- Admin Panel Page -->
+  <div x-show="!loading && currentPage === 'admin'" class="p-8">
+    <!-- Pipeline Controls -->
+    <div class="card p-6 mb-6">
+      <h3 class="text-lg font-semibold mb-4">Pipeline Controls</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <button @click="seedDemoData()" :disabled="pipelineRunning" class="p-3 rounded-lg border border-green-500 border-opacity-30 bg-green-500 bg-opacity-10 hover:bg-opacity-20 text-center transition">
+          <div class="text-xs font-semibold text-green-400">Seed Demo Data</div>
+          <div class="text-xs text-gray-400 mt-1" x-text="pipelineStatus['seed'] || 'Ready'"></div>
+        </button>
+        <button @click="runPipeline('run-lifecycle')" :disabled="pipelineRunning" class="p-3 rounded-lg border border-gray-600 hover:border-indigo-500 text-center transition">
+          <div class="text-xs font-semibold">Lifecycle</div>
+          <div class="text-xs text-gray-400 mt-1" x-text="pipelineStatus['run-lifecycle'] || 'Ready'"></div>
+        </button>
+        <button @click="runPipeline('run-forecasting')" :disabled="pipelineRunning" class="p-3 rounded-lg border border-gray-600 hover:border-indigo-500 text-center transition">
+          <div class="text-xs font-semibold">Forecasting</div>
+          <div class="text-xs text-gray-400 mt-1" x-text="pipelineStatus['run-forecasting'] || 'Ready'"></div>
+        </button>
+        <button @click="runPipeline('run-replenishment')" :disabled="pipelineRunning" class="p-3 rounded-lg border border-gray-600 hover:border-indigo-500 text-center transition">
+          <div class="text-xs font-semibold">Replenishment</div>
+          <div class="text-xs text-gray-400 mt-1" x-text="pipelineStatus['run-replenishment'] || 'Ready'"></div>
+        </button>
+        <button @click="runPipeline('run-transfers')" :disabled="pipelineRunning" class="p-3 rounded-lg border border-gray-600 hover:border-indigo-500 text-center transition">
+          <div class="text-xs font-semibold">Transfers</div>
+          <div class="text-xs text-gray-400 mt-1" x-text="pipelineStatus['run-transfers'] || 'Ready'"></div>
+        </button>
+        <button @click="runPipeline('run-all')" :disabled="pipelineRunning" class="p-3 rounded-lg border border-yellow-500 border-opacity-30 bg-yellow-500 bg-opacity-10 hover:bg-opacity-20 text-center transition">
+          <div class="text-xs font-semibold text-yellow-400">Run All</div>
+          <div class="text-xs text-gray-400 mt-1" x-text="pipelineStatus['run-all'] || 'Ready'"></div>
+        </button>
+      </div>
+      <div x-show="pipelineRunning" class="mt-3 text-sm text-indigo-400 flex items-center gap-2">
+        <div class="animate-spin h-4 w-4 border-2 border-indigo-400 border-t-transparent rounded-full"></div>
+        Running <span x-text="pipelineRunning"></span>...
+      </div>
+    </div>
+
+    <!-- Database Tables -->
+    <div class="card p-6 mb-6">
+      <h3 class="text-lg font-semibold mb-4">Database Tables (<span x-text="dbTables.length"></span>)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-gray-400 border-b border-gray-700">
+            <th class="pb-3">Schema</th><th class="pb-3">Table</th><th class="pb-3">Rows</th><th class="pb-3">Actions</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="t in dbTables" :key="t.schema+'.'+t.table">
+              <tr class="table-row border-b border-gray-800">
+                <td class="py-2"><span class="badge badge-purple" x-text="t.schema"></span></td>
+                <td class="py-2 font-mono text-xs" x-text="t.table"></td>
+                <td class="py-2 font-semibold" x-text="t.rows.toLocaleString()"></td>
+                <td class="py-2 flex gap-2">
+                  <button @click="browseTable(t.schema, t.table)" class="text-xs text-indigo-400 hover:text-indigo-300">Browse</button>
+                  <button @click="exportTable(t.schema, t.table, 'csv')" class="text-xs text-green-400 hover:text-green-300">CSV</button>
+                  <button @click="exportTable(t.schema, t.table, 'json')" class="text-xs text-blue-400 hover:text-blue-300">JSON</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table Browser -->
+    <div class="card p-6" x-show="tableData">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold"><span class="text-gray-400" x-text="tableBrowseSchema + '.'"></span><span x-text="tableBrowseTable"></span></h3>
+        <div class="text-sm text-gray-400">Showing <span x-text="tableData?.data?.length || 0"></span> of <span x-text="(tableData?.total || 0).toLocaleString()"></span></div>
+      </div>
+      <div class="overflow-x-auto max-h-96 overflow-y-auto">
+        <table class="w-full text-xs">
+          <thead class="sticky top-0 bg-gray-800"><tr class="text-left text-gray-400 border-b border-gray-700">
+            <template x-for="col in (tableData?.columns || [])" :key="col">
+              <th class="pb-2 pr-4 whitespace-nowrap" x-text="col"></th>
+            </template>
+          </tr></thead>
+          <tbody>
+            <template x-for="(row, idx) in (tableData?.data || [])" :key="idx">
+              <tr class="table-row border-b border-gray-800">
+                <template x-for="col in (tableData?.columns || [])" :key="col">
+                  <td class="py-1.5 pr-4 whitespace-nowrap max-w-xs truncate" x-text="row[col]"></td>
+                </template>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -609,6 +893,14 @@ function app() {
     vendorList: [], vendorLookupId: '', vendorPortal: null,
     // POs
     poStatus: '', purchaseOrders: [],
+    // Catalog
+    catalogProducts: [], catalogStores: [], catalogVendors: [], catalogStats: null,
+    catalogCategory: '', catalogBrand: '', catalogTab: 'products',
+    // Data Upload
+    uploadTargets: [], uploadMsg: '', uploadLoading: false,
+    // Admin
+    dbTables: [], tableData: null, tableBrowseSchema: '', tableBrowseTable: '',
+    pipelineStatus: {}, pipelineRunning: '',
 
     navItems: [
       { id: 'dashboard', label: 'Control Tower', desc: 'Unified platform overview', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>' },
@@ -619,6 +911,9 @@ function app() {
       { id: 'transfers', label: 'Transfers', desc: 'Inter-store transfer optimization', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>' },
       { id: 'vendors', label: 'Vendors', desc: 'Vendor scorecards & portal', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
       { id: 'purchase-orders', label: 'Purchase Orders', desc: 'PO management & recommendations', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' },
+      { id: 'catalog', label: 'Product Catalog', desc: 'Browse products, stores & vendors', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' },
+      { id: 'data-upload', label: 'Data Upload', desc: 'Upload CSV data files', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>' },
+      { id: 'admin', label: 'Admin Panel', desc: 'Database, pipelines & system settings', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
     ],
 
     async init() {
@@ -653,6 +948,9 @@ function app() {
       if (page === 'dashboard') await this.loadDashboard();
       else if (page === 'vendors') await this.loadVendors();
       else if (page === 'purchase-orders') await this.loadPurchaseOrders();
+      else if (page === 'catalog') await this.loadCatalog();
+      else if (page === 'data-upload') await this.loadUploadTargets();
+      else if (page === 'admin') await this.loadAdmin();
     },
 
     refreshAll() { this.loadPage(this.currentPage); },
@@ -798,6 +1096,82 @@ function app() {
     async generatePOs() {
       await this.api('/api/v1/purchase-orders/generate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
       await this.loadPurchaseOrders();
+    },
+
+    // Catalog
+    async loadCatalog() {
+      this.catalogStats = await this.api('/api/v1/admin/catalog/stats');
+      await this.loadCatalogProducts();
+      if (!this.catalogStores.length) {
+        const r = await this.api('/api/v1/admin/catalog/stores');
+        this.catalogStores = r?.stores || [];
+      }
+      if (!this.catalogVendors.length) {
+        const r = await this.api('/api/v1/admin/catalog/vendors');
+        this.catalogVendors = r?.vendors || [];
+      }
+    },
+    async loadCatalogProducts() {
+      let url = '/api/v1/admin/catalog/products?limit=200';
+      if (this.catalogCategory) url += `&category=${this.catalogCategory}`;
+      if (this.catalogBrand) url += `&brand=${this.catalogBrand}`;
+      const r = await this.api(url);
+      this.catalogProducts = r?.products || [];
+    },
+
+    // Data Upload
+    async loadUploadTargets() {
+      const r = await this.api('/api/v1/admin/upload/targets');
+      this.uploadTargets = r?.targets || [];
+    },
+    async uploadFile(target, fileInput, mode) {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      this.uploadLoading = true;
+      this.uploadMsg = `Uploading ${file.name}...`;
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const r = await fetch(`${API}/api/v1/admin/upload/${target}?mode=${mode||'append'}`, { method: 'POST', body: formData });
+        const data = await r.json();
+        this.uploadMsg = data.status === 'success' ? `Uploaded ${data.rows_uploaded} rows to ${target} (total: ${data.total_rows})` : `Error: ${data.detail}`;
+      } catch (e) { this.uploadMsg = `Upload failed: ${e.message}`; }
+      this.uploadLoading = false;
+    },
+
+    // Admin
+    async loadAdmin() {
+      const r = await this.api('/api/v1/admin/tables');
+      this.dbTables = r?.tables || [];
+    },
+    async browseTable(schema, table) {
+      this.tableBrowseSchema = schema;
+      this.tableBrowseTable = table;
+      const r = await this.api(`/api/v1/admin/tables/${schema}/${table}?limit=50`);
+      this.tableData = r;
+    },
+    async runPipeline(name) {
+      this.pipelineRunning = name;
+      this.pipelineStatus[name] = 'running...';
+      const r = await this.api(`/api/v1/admin/pipeline/${name}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+      this.pipelineStatus[name] = r?.status === 'success' ? 'Done' : `Error: ${r?.detail || 'failed'}`;
+      this.pipelineRunning = '';
+      await this.loadAdmin();
+    },
+    async seedDemoData() {
+      this.pipelineRunning = 'seed';
+      this.pipelineStatus['seed'] = 'Seeding data...';
+      const r = await this.api('/api/v1/admin/pipeline/seed-demo', { method: 'POST', headers: {'Content-Type':'application/json'} });
+      this.pipelineStatus['seed'] = r?.status === 'success' ? `Seeded: ${JSON.stringify(r.seeded)}` : 'Failed';
+      this.pipelineRunning = '';
+      await this.loadAdmin();
+    },
+    async exportTable(schema, table, fmt) {
+      if (fmt === 'csv') {
+        window.open(`${API}/api/v1/admin/export/${schema}/${table}?format=csv`, '_blank');
+      } else {
+        window.open(`${API}/api/v1/admin/export/${schema}/${table}?format=json`, '_blank');
+      }
     },
   };
 }

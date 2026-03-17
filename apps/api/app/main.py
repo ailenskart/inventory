@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from apps.api.app.routers import (
+    admin,
     assortment,
     control_tower,
     forecasts,
@@ -64,6 +65,7 @@ app.include_router(assortment.router, prefix="/api/v1/assortment", tags=["Assort
 app.include_router(transfers.router, prefix="/api/v1/transfers", tags=["Transfers"])
 app.include_router(vendors.router, prefix="/api/v1/vendors", tags=["Vendors"])
 app.include_router(purchase_orders.router, prefix="/api/v1/purchase-orders", tags=["Purchase Orders"])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 
 # Serve frontend dashboard
 _UI_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "ui", "static")
