@@ -57,7 +57,7 @@ def validate_sources(con: duckdb.DuckDBPyConnection) -> list[ValidationResult]:
     results.append(run_check(con, "src_skus_unique_id",
         "select sku_id from main_raw.skus group by sku_id having count(*) > 1"))
     results.append(run_check(con, "src_skus_valid_category",
-        "select * from main_raw.skus where category not in ('eyeglasses', 'sunglasses', 'contact_lenses')"))
+        "select * from main_raw.skus where category not in ('eyeglasses', 'sunglasses', 'contact_lenses', 'computer_glasses')"))
 
     # 3. Vendors: unique, valid type
     results.append(run_check(con, "src_vendors_unique_id",
@@ -89,11 +89,15 @@ def validate_sources(con: duckdb.DuckDBPyConnection) -> list[ValidationResult]:
         select * from bal where out_q != in_q
         """))
 
-    # 8. Data completeness: expected row counts
+    # 8. Store ownership types are valid
+    results.append(run_check(con, "src_stores_valid_type",
+        "select * from main_raw.stores where store_type not in ('COCO', 'FOFO')"))
+
+    # 9. Data completeness: expected minimum row counts (works for both full and lite mode)
     results.append(run_check(con, "src_stores_count",
-        "select 1 where (select count(*) from main_raw.stores) < 50", expect_zero=True))
+        "select 1 where (select count(*) from main_raw.stores) < 10", expect_zero=True))
     results.append(run_check(con, "src_skus_count",
-        "select 1 where (select count(*) from main_raw.skus) < 1000", expect_zero=True))
+        "select 1 where (select count(*) from main_raw.skus) < 100", expect_zero=True))
 
     return results
 

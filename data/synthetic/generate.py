@@ -740,6 +740,201 @@ def generate_store_traffic(stores: list[dict]) -> list[dict]:
     return rows
 
 
+# ─── Granular store traffic (hourly × demographics) ─────────────────────────
+
+# Operating hours for Lenskart stores
+STORE_HOURS = list(range(10, 22))  # 10 AM to 9 PM
+
+# Hourly traffic distribution (peak at 12-1 PM and 6-8 PM)
+HOURLY_WEIGHTS = {
+    10: 0.04, 11: 0.06, 12: 0.10, 13: 0.09, 14: 0.07,
+    15: 0.06, 16: 0.07, 17: 0.09, 18: 0.12, 19: 0.13,
+    20: 0.10, 21: 0.07,
+}
+
+AGE_GROUPS = ["18-24", "25-34", "35-44", "45-54", "55+"]
+AGE_WEIGHTS = [0.18, 0.35, 0.25, 0.14, 0.08]  # Young adults dominate eyewear
+
+AFFLUENCE_SEGMENTS = ["budget", "mid", "premium", "luxury"]
+# Affluence varies by cluster
+AFFLUENCE_BY_CLUSTER = {
+    "METRO_HIGH":  [0.10, 0.25, 0.40, 0.25],
+    "METRO_MID":   [0.15, 0.35, 0.35, 0.15],
+    "TIER1_HIGH":  [0.20, 0.40, 0.30, 0.10],
+    "TIER1_MID":   [0.25, 0.40, 0.25, 0.10],
+    "TIER2":       [0.35, 0.40, 0.20, 0.05],
+    "KIOSK":       [0.20, 0.35, 0.30, 0.15],
+}
+
+TRAFFIC_DETAIL_FIELDS = [
+    "store_id", "traffic_date", "hour", "gender", "age_group",
+    "affluence_segment", "visitor_count", "tried_product", "made_purchase",
+]
+
+
+def generate_store_traffic_detail_streaming(stores: list[dict]):
+    """Stream hourly demographic traffic data to CSV."""
+    csv_out = StreamingCSV("store_traffic_detail.csv", TRAFFIC_DETAIL_FIELDS)
+
+    # Sample every 7th day to keep data manageable (weekly snapshots)
+    step = 7 if not LITE_MODE else 14
+
+    for d_offset in range(0, NUM_DAYS, step):
+        d = START_DATE + timedelta(days=d_offset)
+        season_mult, _ = seasonal_multiplier(d)
+        wknd_mult = weekend_multiplier(d)
+
+        for store in stores:
+            cluster = STORE_CLUSTERS[store["store_cluster"]]
+            daily_base = cluster["base_traffic"]
+            daily_total = max(1, int(daily_base * season_mult * wknd_mult * random.uniform(0.6, 1.4)))
+            affluence_weights = AFFLUENCE_BY_CLUSTER[store["store_cluster"]]
+
+            for hour in STORE_HOURS:
+                hour_traffic = max(1, int(daily_total * HOURLY_WEIGHTS[hour] * random.uniform(0.7, 1.3)))
+
+                for gender in ["M", "F"]:
+                    gender_share = random.uniform(0.45, 0.55) if gender == "M" else None
+                    if gender_share is None:
+                        gender_share = 1.0 - random.uniform(0.45, 0.55)
+                    gender_traffic = max(0, int(hour_traffic * gender_share))
+
+                    if gender_traffic == 0:
+                        continue
+
+                    age_group = random.choices(AGE_GROUPS, weights=AGE_WEIGHTS)[0]
+                    affluence = random.choices(AFFLUENCE_SEGMENTS, weights=affluence_weights)[0]
+
+                    tried = int(gender_traffic * random.uniform(0.2, 0.5))
+                    purchased = int(tried * cluster["conversion"] * random.uniform(0.5, 1.5))
+
+                    csv_out.write({
+                        "store_id": store["store_id"],
+                        "traffic_date": d.isoformat(),
+                        "hour": hour,
+                        "gender": gender,
+                        "age_group": age_group,
+                        "affluence_segment": affluence,
+                        "visitor_count": gender_traffic,
+                        "tried_product": tried,
+                        "made_purchase": purchased,
+                    })
+
+    csv_out.close()
+
+
+# ─── Staff / sales associate data ───────────────────────────────────────────
+
+STAFF_ROLES = ["optometrist", "sales_associate", "store_manager", "senior_associate"]
+STAFF_ROLE_WEIGHTS = [0.15, 0.55, 0.10, 0.20]
+
+# Staff count by store format
+STAFF_COUNT_BY_FORMAT = {
+    "large": (8, 15),
+    "medium": (5, 10),
+    "small": (3, 6),
+    "kiosk": (2, 4),
+}
+
+FIRST_NAMES = [
+    "Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Ayaan", "Krishna", "Ishaan",
+    "Ananya", "Saanvi", "Aanya", "Isha", "Pari", "Diya", "Priya", "Meera", "Kavya", "Riya",
+    "Rohan", "Amit", "Rahul", "Suresh", "Deepak", "Neha", "Pooja", "Sneha", "Anjali", "Swati",
+]
+LAST_NAMES = [
+    "Sharma", "Verma", "Patel", "Gupta", "Singh", "Kumar", "Reddy", "Nair", "Iyer", "Joshi",
+    "Mehta", "Shah", "Chopra", "Malhotra", "Bhat", "Rao", "Das", "Mukherjee", "Banerjee", "Pillai",
+]
+
+
+def generate_staff(stores: list[dict]) -> list[dict]:
+    """Generate staff roster for each store."""
+    staff = []
+    staff_id = 0
+
+    for store in stores:
+        min_staff, max_staff = STAFF_COUNT_BY_FORMAT[store["store_format"]]
+        n_staff = random.randint(min_staff, max_staff)
+
+        for _ in range(n_staff):
+            staff_id += 1
+            role = random.choices(STAFF_ROLES, weights=STAFF_ROLE_WEIGHTS)[0]
+            join_date = START_DATE - timedelta(days=random.randint(30, 1200))
+            is_active = random.random() < 0.92
+
+            staff.append({
+                "staff_id": f"EMP{staff_id:05d}",
+                "store_id": store["store_id"],
+                "staff_name": f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}",
+                "role": role,
+                "join_date": join_date.isoformat(),
+                "is_active": is_active,
+                "monthly_target_units": {"optometrist": 0, "sales_associate": 80,
+                                         "store_manager": 40, "senior_associate": 100}[role],
+                "monthly_target_revenue": {"optometrist": 0, "sales_associate": 150000,
+                                           "store_manager": 100000, "senior_associate": 250000}[role],
+            })
+    return staff
+
+
+STAFF_SALES_FIELDS = [
+    "staff_id", "store_id", "sale_date", "sku_id", "category", "brand",
+    "qty_sold", "revenue", "was_upsell", "customer_rating",
+]
+
+
+def generate_staff_sales_streaming(stores: list[dict], skus: list[dict], staff: list[dict]):
+    """Stream staff-level sales performance data to CSV."""
+    csv_out = StreamingCSV("staff_sales.csv", STAFF_SALES_FIELDS)
+
+    # Build staff lookup by store
+    staff_by_store = {}
+    for emp in staff:
+        if emp["is_active"] and emp["role"] in ("sales_associate", "senior_associate", "store_manager"):
+            staff_by_store.setdefault(emp["store_id"], []).append(emp)
+
+    sellable_skus = [s for s in skus if not s["is_display_only"]]
+
+    # Sample every 3rd day to keep data manageable
+    step = 3 if not LITE_MODE else 7
+
+    for d_offset in range(0, NUM_DAYS, step):
+        d = START_DATE + timedelta(days=d_offset)
+        season_mult, _ = seasonal_multiplier(d)
+        wknd_mult = weekend_multiplier(d)
+
+        for store in stores:
+            store_staff = staff_by_store.get(store["store_id"], [])
+            if not store_staff:
+                continue
+
+            cluster = STORE_CLUSTERS[store["store_cluster"]]
+            daily_sales = max(1, int(cluster["base_traffic"] * cluster["conversion"]
+                                     * season_mult * wknd_mult * random.uniform(0.4, 1.2)))
+
+            for _ in range(daily_sales):
+                emp = random.choice(store_staff)
+                sku = random.choice(sellable_skus)
+                qty = random.choices([1, 2], weights=[0.85, 0.15])[0]
+                was_upsell = random.random() < 0.15  # 15% upsell rate
+                rating = random.choices([0, 3, 4, 5], weights=[0.5, 0.10, 0.20, 0.20])[0]  # 0 = no rating
+
+                csv_out.write({
+                    "staff_id": emp["staff_id"],
+                    "store_id": store["store_id"],
+                    "sale_date": d.isoformat(),
+                    "sku_id": sku["sku_id"],
+                    "category": sku["category"],
+                    "brand": sku["brand"],
+                    "qty_sold": qty,
+                    "revenue": round(sku["mrp"] * qty * random.uniform(0.85, 1.0), 2),
+                    "was_upsell": was_upsell,
+                    "customer_rating": rating,
+                })
+
+    csv_out.close()
+
+
 def generate_promotions(skus: list[dict]) -> list[dict]:
     rows = []
     promo_id = 0
@@ -843,13 +1038,23 @@ def main():
     transfers = generate_transfers(stores, skus)
     write_csv("transfers.csv", transfers)
 
-    print("[11/11] Generating purchase orders, traffic, promotions...")
+    print("[11/14] Generating purchase orders, traffic, promotions...")
     pos = generate_purchase_orders(vendors, skus)
     write_csv("purchase_orders.csv", pos)
     traffic = generate_store_traffic(stores)
     write_csv("store_traffic.csv", traffic)
     promos = generate_promotions(skus)
     write_csv("promotions.csv", promos)
+
+    print("[12/14] Generating granular store traffic (hourly × demographics)...")
+    generate_store_traffic_detail_streaming(stores)
+
+    print("[13/14] Generating staff roster...")
+    staff = generate_staff(stores)
+    write_csv("staff.csv", staff)
+
+    print("[14/14] Generating staff sales performance (streaming to disk)...")
+    generate_staff_sales_streaming(stores, skus, staff)
 
     print()
     print("Done! Files written to:", OUTPUT_DIR)

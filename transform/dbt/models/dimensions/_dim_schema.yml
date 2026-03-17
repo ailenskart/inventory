@@ -20,7 +20,7 @@ models:
       - name: store_type
         tests:
           - accepted_values:
-              values: ['company_owned', 'franchise']
+              values: ['COCO', 'FOFO']
 
   - name: dim_sku
     description: "SKU dimension with product attributes and fulfillment classification"
@@ -31,7 +31,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['eyeglasses', 'sunglasses', 'contact_lenses']
+              values: ['eyeglasses', 'sunglasses', 'contact_lenses', 'computer_glasses']
       - name: sku_type
         description: "display_dummy (try-on only) or physical_sell (sold from stock)"
         tests:

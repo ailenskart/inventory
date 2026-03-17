@@ -20,13 +20,13 @@ class TestStoreSchema:
             state="Maharashtra",
             region="West",
             pincode="400001",
-            store_type=StoreType.COMPANY_OWNED,
+            store_type=StoreType.COCO,
             store_format=StoreFormat.LARGE,
             display_capacity=200,
         )
         assert store.store_id == "STR0001"
         assert store.is_active is True
-        assert store.store_type == StoreType.COMPANY_OWNED
+        assert store.store_type == StoreType.COCO
 
     def test_store_defaults(self):
         store = Store(
@@ -36,7 +36,7 @@ class TestStoreSchema:
             state="Test",
             region="Test",
             pincode="000000",
-            store_type=StoreType.FRANCHISE,
+            store_type=StoreType.FOFO,
             store_format=StoreFormat.SMALL,
         )
         assert store.display_capacity == 0

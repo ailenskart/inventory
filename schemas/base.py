@@ -12,9 +12,8 @@ class TimestampMixin(BaseModel):
 
 
 class StoreType(str, Enum):
-    FRANCHISE = "franchise"
-    COMPANY_OWNED = "company_owned"
-    KIOSK = "kiosk"
+    COCO = "COCO"  # Company Owned Company Operated (flagship, new markets)
+    FOFO = "FOFO"  # Franchise Owned Franchise Operated (rapid expansion, Tier 2-4)
 
 
 class StoreFormat(str, Enum):
@@ -28,6 +27,7 @@ class ProductCategory(str, Enum):
     EYEGLASSES = "eyeglasses"
     SUNGLASSES = "sunglasses"
     CONTACT_LENSES = "contact_lenses"
+    COMPUTER_GLASSES = "computer_glasses"
     ACCESSORIES = "accessories"
 
 
