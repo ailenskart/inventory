@@ -1,4 +1,4 @@
-.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data test-integration generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline forecast-train forecast-predict forecast-evaluate
+.PHONY: help bootstrap install lint type-check test test-unit test-smoke test-data test-integration generate-data load-seeds api docker-up docker-down dbt-seed dbt-run dbt-test dbt-full validate-data dagster-dev clean demo data-pipeline forecast-train forecast-predict forecast-evaluate replenishment-run replenishment-simulate
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -82,6 +82,14 @@ forecast-predict: ## Run batch forecast inference
 
 forecast-evaluate: ## Evaluate forecast model quality
 	python -m ml.forecasting.evaluate --output data/eval_report.json
+
+# ─── Replenishment ──────────────────────────────────────────────────────────
+
+replenishment-run: ## Run daily replenishment pipeline
+	python -m services.replenishment.pipeline
+
+replenishment-simulate: ## Simulate daily vs weekly replenishment
+	python -m services.replenishment.simulation --weeks 12
 
 # ─── Cleanup ─────────────────────────────────────────────────────────────────
 

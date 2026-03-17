@@ -52,6 +52,23 @@ class TestReplenishmentEndpoints:
     def test_get_plan(self):
         response = client.get("/api/v1/replenishment/plan")
         assert response.status_code == 200
+        data = response.json()
+        assert "plans" in data
+        assert "total_skus" in data
+        assert "total_stores" in data
+
+    def test_run_endpoint_exists(self):
+        """POST /run should exist (may fail if DB not ready)."""
+        response = client.post(
+            "/api/v1/replenishment/run",
+            json={"target_days_of_cover": 28},
+        )
+        assert response.status_code in (200, 500, 503)
+
+    def test_store_replenishment_404(self):
+        """GET /store/{id} returns 404 when no recommendations exist."""
+        response = client.get("/api/v1/replenishment/store/NONEXISTENT")
+        assert response.status_code in (404, 503)
 
     def test_execute(self):
         response = client.post(

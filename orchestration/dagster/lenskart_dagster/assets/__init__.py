@@ -217,11 +217,33 @@ def store_clustering(context: AssetExecutionContext) -> Output:
 
 # ─── Optimization (downstream, placeholder) ──────────────────────────────────
 
-@asset(group_name="optimization", deps=[demand_forecast], description="Generate replenishment plan")
+@asset(group_name="optimization", deps=[demand_forecast], description="Generate daily replenishment plan")
 def replenishment_plan(context: AssetExecutionContext) -> Output:
-    """Generate replenishment recommendations."""
-    # TODO: Wire to services/replenishment
-    return Output(value={"status": "placeholder", "recommendations": 0})
+    """Generate daily replenishment recommendations for all stores."""
+    import sys
+    sys.path.insert(0, PROJECT_ROOT)
+
+    from services.replenishment.config import ReplenishmentConfig
+    from services.replenishment.pipeline import run_replenishment_pipeline
+
+    config = ReplenishmentConfig(db_path=os.path.join(DATA_DIR, "dev.duckdb"))
+    recommendations = run_replenishment_pipeline(config, write_to_db=True)
+
+    n_recs = len(recommendations)
+    n_stores = int(recommendations["destination_store"].nunique()) if not recommendations.empty else 0
+    n_emergency = int((recommendations["urgency"] == "emergency").sum()) if not recommendations.empty else 0
+
+    context.log.info(f"Replenishment: {n_recs} recommendations, "
+                     f"{n_stores} stores, {n_emergency} emergency")
+
+    return Output(
+        value={"status": "success", "recommendations": n_recs},
+        metadata={
+            "n_recommendations": n_recs,
+            "n_stores": n_stores,
+            "n_emergency": n_emergency,
+        },
+    )
 
 
 @asset(group_name="optimization", deps=[demand_forecast, store_clustering], description="Generate assortment plan")
