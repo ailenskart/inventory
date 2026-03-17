@@ -3,31 +3,38 @@
 # Railway.app startup script
 #
 # Runs data bootstrap on first deploy, then starts the API server.
-# DuckDB file persists in Railway's ephemeral storage per deploy.
+# Uses lite mode to keep memory usage low and startup fast.
 ###############################################################################
 
 set -euo pipefail
 
 DB_PATH="${LENSKART_DB_PATH:-/app/data/dev.duckdb}"
+export LENSKART_DATA_LITE="${LENSKART_DATA_LITE:-1}"
 
 echo "=== Lenskart Retail Intelligence — Railway Startup ==="
 
 # Bootstrap data if DB doesn't exist yet
 if [ ! -f "$DB_PATH" ]; then
-    echo "[1/4] Generating synthetic data..."
-    python data/synthetic/generate.py
+    echo "[1/4] Generating synthetic data (lite=$LENSKART_DATA_LITE)..."
+    python data/synthetic/generate.py || {
+        echo "WARNING: Data generation failed, starting API without data"
+    }
 
-    echo "[2/4] Loading dbt seeds..."
-    python data/load_seeds.py
+    if ls data/synthetic/*.csv 1>/dev/null 2>&1; then
+        echo "[2/4] Loading dbt seeds..."
+        python data/load_seeds.py || echo "WARNING: Seed loading failed"
 
-    echo "[3/4] Running dbt pipeline..."
-    cd transform/dbt
-    dbt seed --profiles-dir . --full-refresh
-    dbt run --profiles-dir .
-    cd /app
+        echo "[3/4] Running dbt pipeline..."
+        cd transform/dbt
+        dbt seed --profiles-dir . --full-refresh || echo "WARNING: dbt seed failed"
+        dbt run --profiles-dir . || echo "WARNING: dbt run failed"
+        cd /app
 
-    echo "[4/4] Running ML pipelines..."
-    python scripts/demo_e2e.py --skip-data-foundation || echo "Pipeline completed with warnings"
+        echo "[4/4] Running ML pipelines..."
+        python scripts/demo_e2e.py --skip-data-foundation || echo "WARNING: ML pipeline completed with warnings"
+    else
+        echo "No CSV files found, skipping dbt and ML steps"
+    fi
 
     echo "=== Bootstrap complete ==="
 else

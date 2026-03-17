@@ -6,15 +6,8 @@ Creates realistic data for local development and testing:
 - 5 vendors with varying lead times and reliability
 - 365 days of transactional history (2024-01-01 to 2024-12-30)
 
-Data includes:
-- Seasonality (festive seasons, weekends, summer for sunglasses)
-- Promotions (BOGO, clearance, seasonal)
-- Store clusters with distinct demand profiles
-- Dummy frames (display-only, order capture) vs physical-sell SKUs
-- Trial events as display interest signals
-- Eye test data as prescription order proxies
-- Inter-store transfers and purchase orders
-- Store traffic with footfall patterns
+Set LENSKART_DATA_LITE=1 to generate a smaller dataset (10 stores, 100 SKUs, 90 days)
+suitable for memory-constrained environments like Railway free tier.
 """
 
 import csv
@@ -27,12 +20,14 @@ random.seed(42)
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ─── Constants ───────────────────────────────────────────────────────────────
+# ─── Lite mode for constrained environments ─────────────────────────────────
 
-NUM_STORES = 50
-NUM_SKUS = 1000
+LITE_MODE = os.environ.get("LENSKART_DATA_LITE", "0") == "1"
+
+NUM_STORES = 10 if LITE_MODE else 50
+NUM_SKUS = 100 if LITE_MODE else 1000
 NUM_VENDORS = 5
-NUM_DAYS = 365
+NUM_DAYS = 90 if LITE_MODE else 365
 START_DATE = date(2024, 1, 1)
 
 CITIES = [
@@ -115,6 +110,29 @@ def weekend_multiplier(d: date) -> float:
     return 1.0
 
 
+# ─── Streaming CSV Writer ───────────────────────────────────────────────────
+
+class StreamingCSV:
+    """Write CSV rows incrementally to avoid holding everything in memory."""
+
+    def __init__(self, filename: str, fieldnames: list[str]):
+        self.filepath = os.path.join(OUTPUT_DIR, filename)
+        self.filename = filename
+        self.fieldnames = fieldnames
+        self.count = 0
+        self._file = open(self.filepath, "w", newline="")
+        self._writer = csv.DictWriter(self._file, fieldnames=fieldnames)
+        self._writer.writeheader()
+
+    def write(self, row: dict):
+        self._writer.writerow(row)
+        self.count += 1
+
+    def close(self):
+        self._file.close()
+        print(f"  {self.count:>12,} rows -> {self.filename}")
+
+
 # ─── Generators ──────────────────────────────────────────────────────────────
 
 def generate_stores() -> list[dict]:
@@ -123,7 +141,6 @@ def generate_stores() -> list[dict]:
 
     for i in range(1, NUM_STORES + 1):
         city, state, region, base_lat, base_lng = random.choice(CITIES)
-        # Assign cluster based on city tier and store index
         if region in ("West", "South") and i % 5 < 2:
             cluster = "METRO_HIGH"
         elif region in ("North",) and i % 5 < 2:
@@ -188,12 +205,9 @@ def generate_skus(vendors: list[dict]) -> list[dict]:
     vendor_ids = [v["vendor_id"] for v in vendors]
 
     for i in range(1, NUM_SKUS + 1):
-        # Distribution: 60% eyeglasses, 25% sunglasses, 15% contact lenses
         r = random.random()
         if r < 0.60:
             category = "eyeglasses"
-            # 70% of eyeglasses are dummy display frames (order capture)
-            # 30% are physical sell (last piece / ready stock)
             if random.random() < 0.70:
                 sku_type = "display_dummy"
                 fulfillment_type = "order_capture"
@@ -248,7 +262,6 @@ def generate_skus(vendors: list[dict]) -> list[dict]:
 
 
 def generate_calendar() -> list[dict]:
-    """Generate a calendar dimension for 365 days."""
     rows = []
     for d_offset in range(NUM_DAYS):
         d = START_DATE + timedelta(days=d_offset)
@@ -270,14 +283,17 @@ def generate_calendar() -> list[dict]:
     return rows
 
 
-def generate_daily_sales(stores: list[dict], skus: list[dict]) -> list[dict]:
-    """Generate 365 days of daily sales with seasonality and promotions."""
-    rows = []
-    # Pre-compute sku lookup by category
+SALES_FIELDS = ["store_id", "sku_id", "sale_date", "qty_sold", "revenue", "discount",
+                "fulfillment_type", "sales_channel", "is_return"]
+
+def generate_daily_sales_streaming(stores: list[dict], skus: list[dict]):
+    """Stream daily sales directly to CSV to avoid OOM."""
     eyeglass_skus = [s for s in skus if s["category"] == "eyeglasses" and not s["is_display_only"]]
     sunglass_skus = [s for s in skus if s["category"] == "sunglasses"]
     cl_skus = [s for s in skus if s["category"] == "contact_lenses"]
     display_skus = [s for s in skus if s["is_display_only"]]
+
+    csv_out = StreamingCSV("daily_sales.csv", SALES_FIELDS)
 
     for d_offset in range(NUM_DAYS):
         d = START_DATE + timedelta(days=d_offset)
@@ -289,16 +305,14 @@ def generate_daily_sales(stores: list[dict], skus: list[dict]) -> list[dict]:
             cluster = STORE_CLUSTERS[store["store_cluster"]]
             store_base = cluster["conversion"] * cluster["base_traffic"]
 
-            # Eyeglasses (prescription sell-through from physical stock)
+            # Eyeglasses
             n_eye = max(1, int(store_base * 0.5 * season_mult * wknd_mult * random.uniform(0.5, 1.5)))
             for sku in random.sample(eyeglass_skus, min(n_eye, len(eyeglass_skus))):
                 qty = random.choices([1, 2], weights=[0.85, 0.15])[0]
                 discount_pct = 0.15 if promo else random.choice([0, 0, 0, 0.05, 0.10])
-                rows.append({
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "sale_date": d.isoformat(),
-                    "qty_sold": qty,
+                csv_out.write({
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "sale_date": d.isoformat(), "qty_sold": qty,
                     "revenue": round(sku["mrp"] * qty * (1 - discount_pct), 2),
                     "discount": round(sku["mrp"] * qty * discount_pct, 2),
                     "fulfillment_type": sku["fulfillment_type"],
@@ -311,136 +325,184 @@ def generate_daily_sales(stores: list[dict], skus: list[dict]) -> list[dict]:
             for sku in random.sample(sunglass_skus, min(n_sun, len(sunglass_skus))):
                 qty = random.choices([1, 2], weights=[0.9, 0.1])[0]
                 discount_pct = 0.20 if promo else random.choice([0, 0, 0.05, 0.10])
-                rows.append({
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "sale_date": d.isoformat(),
-                    "qty_sold": qty,
+                csv_out.write({
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "sale_date": d.isoformat(), "qty_sold": qty,
                     "revenue": round(sku["mrp"] * qty * (1 - discount_pct), 2),
                     "discount": round(sku["mrp"] * qty * discount_pct, 2),
-                    "fulfillment_type": "direct_sell",
-                    "sales_channel": "walk_in",
+                    "fulfillment_type": "direct_sell", "sales_channel": "walk_in",
                     "is_return": random.random() < 0.04,
                 })
 
-            # Contact lenses (small but steady)
+            # Contact lenses
             n_cl = max(0, int(store_base * 0.1 * season_mult * random.uniform(0.5, 1.5)))
             for sku in random.sample(cl_skus, min(n_cl, len(cl_skus))):
                 qty = random.choices([1, 2, 3], weights=[0.5, 0.35, 0.15])[0]
-                rows.append({
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "sale_date": d.isoformat(),
-                    "qty_sold": qty,
-                    "revenue": round(sku["mrp"] * qty, 2),
-                    "discount": 0.0,
-                    "fulfillment_type": "direct_sell",
-                    "sales_channel": "prescription",
+                csv_out.write({
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "sale_date": d.isoformat(), "qty_sold": qty,
+                    "revenue": round(sku["mrp"] * qty, 2), "discount": 0.0,
+                    "fulfillment_type": "direct_sell", "sales_channel": "prescription",
                     "is_return": False,
                 })
 
-            # Display dummy frames generating orders (order_capture sales)
-            n_display_orders = max(0, int(store_base * 0.3 * season_mult * wknd_mult * random.uniform(0.4, 1.2)))
-            for sku in random.sample(display_skus, min(n_display_orders, len(display_skus))):
-                rows.append({
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "sale_date": d.isoformat(),
-                    "qty_sold": 1,
+            # Display dummy frames
+            n_display = max(0, int(store_base * 0.3 * season_mult * wknd_mult * random.uniform(0.4, 1.2)))
+            for sku in random.sample(display_skus, min(n_display, len(display_skus))):
+                csv_out.write({
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "sale_date": d.isoformat(), "qty_sold": 1,
                     "revenue": round(sku["mrp"] * random.uniform(0.85, 1.0), 2),
                     "discount": round(sku["mrp"] * random.uniform(0, 0.15), 2),
-                    "fulfillment_type": "order_capture",
-                    "sales_channel": "prescription",
+                    "fulfillment_type": "order_capture", "sales_channel": "prescription",
                     "is_return": False,
                 })
 
-    return rows
+    csv_out.close()
 
 
-def generate_daily_inventory(stores: list[dict], skus: list[dict]) -> list[dict]:
-    """Generate daily inventory snapshots for all 365 days.
+INVENTORY_FIELDS = ["store_id", "sku_id", "snapshot_date", "on_hand_qty", "on_display_qty",
+                    "in_storage_qty", "in_transit_qty", "allocated_qty", "available_qty"]
 
-    Inventory for physical-sell SKUs fluctuates based on sales and receipts.
-    Display-only SKUs maintain constant on_display_qty.
-    """
-    rows = []
+def generate_daily_inventory_streaming(stores: list[dict], skus: list[dict]):
+    """Stream daily inventory snapshots to CSV."""
     physical_skus = [s for s in skus if not s["is_display_only"]]
     display_skus = [s for s in skus if s["is_display_only"]]
 
+    csv_out = StreamingCSV("daily_inventory.csv", INVENTORY_FIELDS)
+
     for store in stores:
         cap = store["display_capacity"]
-        # Each store carries a subset of SKUs
-        store_physical = random.sample(physical_skus, min(random.randint(150, 350), len(physical_skus)))
+        store_physical = random.sample(physical_skus, min(random.randint(30 if LITE_MODE else 150, 60 if LITE_MODE else 350), len(physical_skus)))
         store_display = random.sample(display_skus, min(cap, len(display_skus)))
 
-        # Initialize inventory levels
         inv_levels = {}
         for sku in store_physical:
             inv_levels[sku["sku_id"]] = random.randint(2, 25)
         for sku in store_display:
-            inv_levels[sku["sku_id"]] = random.randint(1, 3)  # Display units
+            inv_levels[sku["sku_id"]] = random.randint(1, 3)
 
         for d_offset in range(NUM_DAYS):
             d = START_DATE + timedelta(days=d_offset)
-            # Only emit every 7th day to keep data manageable, plus last 30 days daily
             if d_offset % 7 != 0 and d_offset < (NUM_DAYS - 30):
-                # Still update levels
                 for sid in inv_levels:
                     inv_levels[sid] = max(0, inv_levels[sid] + random.randint(-2, 1))
                     if inv_levels[sid] == 0 and random.random() < 0.3:
-                        inv_levels[sid] = random.randint(5, 15)  # Replenishment
+                        inv_levels[sid] = random.randint(5, 15)
                 continue
 
             for sku in store_physical:
                 on_hand = max(0, inv_levels.get(sku["sku_id"], 0))
                 on_display = min(on_hand, random.randint(0, 3))
                 in_transit = random.randint(0, 5) if on_hand < 5 else 0
-                rows.append({
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "snapshot_date": d.isoformat(),
-                    "on_hand_qty": on_hand,
-                    "on_display_qty": on_display,
-                    "in_storage_qty": on_hand - on_display,
+                csv_out.write({
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "snapshot_date": d.isoformat(), "on_hand_qty": on_hand,
+                    "on_display_qty": on_display, "in_storage_qty": on_hand - on_display,
                     "in_transit_qty": in_transit,
                     "allocated_qty": random.randint(0, min(2, on_hand)),
                     "available_qty": max(0, on_hand - random.randint(0, 2)),
                 })
 
             for sku in store_display:
-                # Display dummies: always 1-2 on display
                 on_display = random.randint(1, 2)
-                rows.append({
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "snapshot_date": d.isoformat(),
-                    "on_hand_qty": on_display,
-                    "on_display_qty": on_display,
-                    "in_storage_qty": 0,
-                    "in_transit_qty": 0,
-                    "allocated_qty": 0,
-                    "available_qty": 0,  # Display-only, not for sale
+                csv_out.write({
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "snapshot_date": d.isoformat(), "on_hand_qty": on_display,
+                    "on_display_qty": on_display, "in_storage_qty": 0,
+                    "in_transit_qty": 0, "allocated_qty": 0, "available_qty": 0,
                 })
 
-            # Drift inventory levels for next snapshot
             for sid in inv_levels:
                 inv_levels[sid] = max(0, inv_levels[sid] + random.randint(-2, 1))
                 if inv_levels[sid] == 0 and random.random() < 0.3:
                     inv_levels[sid] = random.randint(5, 15)
 
-    return rows
+    csv_out.close()
+
+
+TRIAL_FIELDS = ["trial_id", "store_id", "sku_id", "trial_date", "trial_timestamp",
+                "customer_id", "resulted_in_order", "order_id"]
+
+def generate_store_trials_streaming(stores: list[dict], skus: list[dict]):
+    """Stream store trial events to CSV."""
+    display_skus = [s for s in skus if s["is_display_only"]]
+    csv_out = StreamingCSV("store_trials.csv", TRIAL_FIELDS)
+    trial_id = 0
+
+    for d_offset in range(NUM_DAYS):
+        d = START_DATE + timedelta(days=d_offset)
+        season_mult, _ = seasonal_multiplier(d)
+        wknd_mult = weekend_multiplier(d)
+
+        for store in stores:
+            cluster = STORE_CLUSTERS[store["store_cluster"]]
+            n_trials = max(1, int(cluster["base_traffic"] * 0.3 * season_mult * wknd_mult * random.uniform(0.5, 1.5)))
+            # In lite mode, cap trials per store-day
+            if LITE_MODE:
+                n_trials = min(n_trials, 10)
+
+            for _ in range(n_trials):
+                trial_id += 1
+                sku = random.choice(display_skus)
+                conversion = random.random() < cluster["conversion"]
+                csv_out.write({
+                    "trial_id": f"TRL{trial_id:08d}",
+                    "store_id": store["store_id"], "sku_id": sku["sku_id"],
+                    "trial_date": d.isoformat(),
+                    "trial_timestamp": f"{d.isoformat()} {random.randint(10, 20)}:{random.randint(0, 59):02d}:00",
+                    "customer_id": f"CUST{random.randint(1, 100000):06d}" if random.random() < 0.5 else "",
+                    "resulted_in_order": conversion,
+                    "order_id": f"ORD{random.randint(1, 999999):07d}" if conversion else "",
+                })
+
+    csv_out.close()
+
+
+EYE_TEST_FIELDS = ["test_id", "store_id", "test_date", "customer_id",
+                   "sph_right", "cyl_right", "sph_left", "cyl_left",
+                   "resulted_in_purchase", "order_id"]
+
+def generate_eye_tests_streaming(stores: list[dict]):
+    """Stream eye test data to CSV."""
+    csv_out = StreamingCSV("eye_tests.csv", EYE_TEST_FIELDS)
+    test_id = 0
+
+    for d_offset in range(NUM_DAYS):
+        d = START_DATE + timedelta(days=d_offset)
+        season_mult, _ = seasonal_multiplier(d)
+        wknd_mult = weekend_multiplier(d)
+
+        for store in stores:
+            cluster = STORE_CLUSTERS[store["store_cluster"]]
+            n_tests = max(0, int(cluster["base_traffic"] * 0.08 * season_mult * wknd_mult * random.uniform(0.5, 1.5)))
+
+            for _ in range(n_tests):
+                test_id += 1
+                resulted_in_purchase = random.random() < 0.75
+                csv_out.write({
+                    "test_id": f"EYE{test_id:08d}",
+                    "store_id": store["store_id"], "test_date": d.isoformat(),
+                    "customer_id": f"CUST{random.randint(1, 100000):06d}",
+                    "sph_right": round(random.uniform(-6.0, 4.0), 2),
+                    "cyl_right": round(random.uniform(-3.0, 0.0), 2),
+                    "sph_left": round(random.uniform(-6.0, 4.0), 2),
+                    "cyl_left": round(random.uniform(-3.0, 0.0), 2),
+                    "resulted_in_purchase": resulted_in_purchase,
+                    "order_id": f"ORD{random.randint(1, 999999):07d}" if resulted_in_purchase else "",
+                })
+
+    csv_out.close()
 
 
 def generate_receipts(stores: list[dict], skus: list[dict]) -> list[dict]:
-    """Generate goods receipts from vendors and warehouses."""
     rows = []
     receipt_id = 0
     physical_skus = [s for s in skus if not s["is_display_only"]]
 
-    for d_offset in range(0, NUM_DAYS, 3):  # Receipts every ~3 days
+    for d_offset in range(0, NUM_DAYS, 3):
         d = START_DATE + timedelta(days=d_offset)
         for store in stores:
-            # 3-8 receipts per store per cycle
             n_receipts = random.randint(3, 8)
             for _ in range(n_receipts):
                 receipt_id += 1
@@ -458,92 +520,13 @@ def generate_receipts(stores: list[dict], skus: list[dict]) -> list[dict]:
     return rows
 
 
-def generate_store_trials(stores: list[dict], skus: list[dict]) -> list[dict]:
-    """Generate try-on events for display/eyeglasses SKUs.
-
-    These are the primary 'display_interest_signal' — customers trying frames
-    without necessarily buying. High trial counts indicate demand for that frame style.
-    """
-    display_skus = [s for s in skus if s["is_display_only"]]
-    rows = []
-    trial_id = 0
-
-    for d_offset in range(NUM_DAYS):
-        d = START_DATE + timedelta(days=d_offset)
-        season_mult, _ = seasonal_multiplier(d)
-        wknd_mult = weekend_multiplier(d)
-
-        for store in stores:
-            cluster = STORE_CLUSTERS[store["store_cluster"]]
-            n_trials = max(1, int(cluster["base_traffic"] * 0.3 * season_mult * wknd_mult * random.uniform(0.5, 1.5)))
-
-            for _ in range(n_trials):
-                trial_id += 1
-                sku = random.choice(display_skus)
-                conversion = random.random() < cluster["conversion"]
-                rows.append({
-                    "trial_id": f"TRL{trial_id:08d}",
-                    "store_id": store["store_id"],
-                    "sku_id": sku["sku_id"],
-                    "trial_date": d.isoformat(),
-                    "trial_timestamp": f"{d.isoformat()} {random.randint(10, 20)}:{random.randint(0, 59):02d}:00",
-                    "customer_id": f"CUST{random.randint(1, 100000):06d}" if random.random() < 0.5 else "",
-                    "resulted_in_order": conversion,
-                    "order_id": f"ORD{random.randint(1, 999999):07d}" if conversion else "",
-                })
-    return rows
-
-
-def generate_eye_tests(stores: list[dict]) -> list[dict]:
-    """Generate eye test / prescription data.
-
-    Eye tests are a 'prescription_order_signal' — they almost always lead to
-    an eyeglass order. Stores with more eye tests should get more display frames.
-    """
-    rows = []
-    test_id = 0
-
-    for d_offset in range(NUM_DAYS):
-        d = START_DATE + timedelta(days=d_offset)
-        season_mult, _ = seasonal_multiplier(d)
-        wknd_mult = weekend_multiplier(d)
-
-        for store in stores:
-            cluster = STORE_CLUSTERS[store["store_cluster"]]
-            # Eye tests: subset of footfall
-            n_tests = max(0, int(cluster["base_traffic"] * 0.08 * season_mult * wknd_mult * random.uniform(0.5, 1.5)))
-
-            for _ in range(n_tests):
-                test_id += 1
-                resulted_in_purchase = random.random() < 0.75  # 75% convert
-                rows.append({
-                    "test_id": f"EYE{test_id:08d}",
-                    "store_id": store["store_id"],
-                    "test_date": d.isoformat(),
-                    "customer_id": f"CUST{random.randint(1, 100000):06d}",
-                    "sph_right": round(random.uniform(-6.0, 4.0), 2),
-                    "cyl_right": round(random.uniform(-3.0, 0.0), 2),
-                    "sph_left": round(random.uniform(-6.0, 4.0), 2),
-                    "cyl_left": round(random.uniform(-3.0, 0.0), 2),
-                    "resulted_in_purchase": resulted_in_purchase,
-                    "order_id": f"ORD{random.randint(1, 999999):07d}" if resulted_in_purchase else "",
-                })
-    return rows
-
-
 def generate_transfers(stores: list[dict], skus: list[dict]) -> list[dict]:
-    """Generate inter-store transfers.
-
-    Transfers happen for: rebalancing, stockout prevention, EOL clearance.
-    transfer_out at source must eventually balance transfer_in at destination.
-    """
     rows = []
     transfer_id = 0
     physical_skus = [s for s in skus if not s["is_display_only"]]
 
-    for d_offset in range(0, NUM_DAYS, 7):  # Weekly transfer batches
+    for d_offset in range(0, NUM_DAYS, 7):
         d = START_DATE + timedelta(days=d_offset)
-        # 5-15 transfers per week across the network
         n_transfers = random.randint(5, 15)
         for _ in range(n_transfers):
             transfer_id += 1
@@ -552,45 +535,32 @@ def generate_transfers(stores: list[dict], skus: list[dict]) -> list[dict]:
             qty = random.randint(1, 10)
             reason = random.choices(["rebalance", "stockout_prevention", "eol_clearance"], weights=[0.5, 0.35, 0.15])[0]
 
-            # Transfer has two rows: out from source, in to destination
             initiated = d
             completed = d + timedelta(days=random.randint(1, 5))
             status = "received" if completed <= START_DATE + timedelta(days=NUM_DAYS - 1) else "in_transit"
 
             tid = f"TRF{transfer_id:06d}"
-            rows.append({
+            base = {
                 "transfer_id": tid,
                 "from_store_id": from_store["store_id"],
                 "to_store_id": to_store["store_id"],
                 "sku_id": sku["sku_id"],
                 "transfer_qty": qty,
-                "transfer_direction": "out",
                 "status": status,
                 "initiated_date": initiated.isoformat(),
                 "completed_date": completed.isoformat() if status == "received" else "",
                 "reason": reason,
-            })
-            rows.append({
-                "transfer_id": tid,
-                "from_store_id": from_store["store_id"],
-                "to_store_id": to_store["store_id"],
-                "sku_id": sku["sku_id"],
-                "transfer_qty": qty,
-                "transfer_direction": "in",
-                "status": status,
-                "initiated_date": initiated.isoformat(),
-                "completed_date": completed.isoformat() if status == "received" else "",
-                "reason": reason,
-            })
+            }
+            rows.append({**base, "transfer_direction": "out"})
+            rows.append({**base, "transfer_direction": "in"})
     return rows
 
 
 def generate_purchase_orders(vendors: list[dict], skus: list[dict]) -> list[dict]:
-    """Generate purchase orders to vendors."""
     rows = []
     po_id = 0
 
-    for d_offset in range(0, NUM_DAYS, 14):  # POs every 2 weeks
+    for d_offset in range(0, NUM_DAYS, 14):
         d = START_DATE + timedelta(days=d_offset)
         for vendor in vendors:
             po_id += 1
@@ -602,7 +572,6 @@ def generate_purchase_orders(vendors: list[dict], skus: list[dict]) -> list[dict
             order_skus = random.sample(vendor_skus, min(n_lines, len(vendor_skus)))
             lead_time = vendor["avg_lead_time_days"]
             expected_delivery = d + timedelta(days=lead_time)
-            # Sometimes delivered late
             actual_delivery = expected_delivery + timedelta(days=random.randint(-1, 5))
             if actual_delivery > START_DATE + timedelta(days=NUM_DAYS):
                 status = "in_transit"
@@ -634,7 +603,6 @@ def generate_purchase_orders(vendors: list[dict], skus: list[dict]) -> list[dict
 
 
 def generate_store_traffic(stores: list[dict]) -> list[dict]:
-    """Generate daily store traffic with realistic patterns."""
     rows = []
     for d_offset in range(NUM_DAYS):
         d = START_DATE + timedelta(days=d_offset)
@@ -658,11 +626,9 @@ def generate_store_traffic(stores: list[dict]) -> list[dict]:
 
 
 def generate_promotions(skus: list[dict]) -> list[dict]:
-    """Generate promotional events aligned with festive calendar."""
     rows = []
     promo_id = 0
     for start, end, mult, name in FESTIVE_PERIODS:
-        # Store-wide promos
         promo_id += 1
         rows.append({
             "promo_id": f"PROMO{promo_id:04d}",
@@ -672,16 +638,15 @@ def generate_promotions(skus: list[dict]) -> list[dict]:
             "end_date": end.isoformat(),
             "promo_type": "seasonal_sale",
             "promo_name": name,
-            "discount_pct": round((mult - 1) * 0.5, 2),  # e.g., 2.0 mult -> 50% of uplift as discount
+            "discount_pct": round((mult - 1) * 0.5, 2),
             "discount_value": 0.0,
             "is_active": True,
         })
 
-    # SKU-specific clearance promos for EOL items
     eol_skus = [s for s in skus if s["lifecycle_stage"] == "eol"]
     for sku in random.sample(eol_skus, min(30, len(eol_skus))):
         promo_id += 1
-        start = START_DATE + timedelta(days=random.randint(180, 330))
+        start = START_DATE + timedelta(days=random.randint(30 if LITE_MODE else 180, min(NUM_DAYS - 15, 330)))
         rows.append({
             "promo_id": f"PROMO{promo_id:04d}",
             "sku_id": sku["sku_id"],
@@ -697,7 +662,7 @@ def generate_promotions(skus: list[dict]) -> list[dict]:
     return rows
 
 
-# ─── Writer ──────────────────────────────────────────────────────────────────
+# ─── Writer (for small datasets that fit in memory) ─────────────────────────
 
 def write_csv(filename: str, rows: list[dict], fieldnames: list[str] | None = None):
     if not rows:
@@ -718,6 +683,8 @@ def write_csv(filename: str, rows: list[dict], fieldnames: list[str] | None = No
 def main():
     print("=" * 60)
     print("Lenskart Retail Intelligence - Synthetic Data Generator")
+    if LITE_MODE:
+        print("  *** LITE MODE (reduced dataset for constrained envs) ***")
     print("=" * 60)
     print(f"  Stores:  {NUM_STORES}")
     print(f"  SKUs:    {NUM_SKUS}")
@@ -741,25 +708,21 @@ def main():
     calendar = generate_calendar()
     write_csv("calendar.csv", calendar)
 
-    print("[5/11] Generating daily sales (this takes a moment)...")
-    sales = generate_daily_sales(stores, skus)
-    write_csv("daily_sales.csv", sales)
+    print("[5/11] Generating daily sales (streaming to disk)...")
+    generate_daily_sales_streaming(stores, skus)
 
-    print("[6/11] Generating inventory snapshots...")
-    inventory = generate_daily_inventory(stores, skus)
-    write_csv("daily_inventory.csv", inventory)
+    print("[6/11] Generating inventory snapshots (streaming to disk)...")
+    generate_daily_inventory_streaming(stores, skus)
 
     print("[7/11] Generating receipts...")
     receipts = generate_receipts(stores, skus)
     write_csv("receipts.csv", receipts)
 
-    print("[8/11] Generating store trials...")
-    trials = generate_store_trials(stores, skus)
-    write_csv("store_trials.csv", trials)
+    print("[8/11] Generating store trials (streaming to disk)...")
+    generate_store_trials_streaming(stores, skus)
 
-    print("[9/11] Generating eye tests...")
-    eye_tests = generate_eye_tests(stores)
-    write_csv("eye_tests.csv", eye_tests)
+    print("[9/11] Generating eye tests (streaming to disk)...")
+    generate_eye_tests_streaming(stores)
 
     print("[10/11] Generating transfers...")
     transfers = generate_transfers(stores, skus)
@@ -775,10 +738,6 @@ def main():
 
     print()
     print("Done! Files written to:", OUTPUT_DIR)
-    print()
-    print("To load into DuckDB for dbt:")
-    print("  make generate-data")
-    print("  make dbt-seed   # or: make dbt-run")
 
 
 if __name__ == "__main__":
