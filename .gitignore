@@ -30,5 +30,6 @@ logs/
 data/synthetic/*.csv
 !data/synthetic/.gitkeep
 data/dev.duckdb
+data/dev.duckdb.wal
 transform/dbt/seeds/*.csv
 !transform/dbt/seeds/.gitkeep
