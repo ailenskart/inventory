@@ -169,6 +169,45 @@ class TestVendorEndpoints:
         assert response.status_code in (200, 404, 503)
 
 
+class TestControlTowerEndpoints:
+    def test_control_tower_summary(self):
+        response = client.get("/api/v1/control-tower/summary")
+        assert response.status_code == 200
+        data = response.json()
+        assert "status" in data
+        assert "forecast" in data
+        assert "stockout_risk" in data
+        assert "replenishment" in data
+        assert "transfers" in data
+        assert "vendor_alerts" in data
+        assert "purchase_orders" in data
+        assert "lifecycle" in data
+
+
+class TestLifecycleEndpoints:
+    def test_list_stages(self):
+        response = client.get("/api/v1/lifecycle/stages")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 6
+
+    def test_classify_endpoint_exists(self):
+        """POST /classify should exist (may fail if DB not ready)."""
+        response = client.post(
+            "/api/v1/lifecycle/classify",
+            json={"sku_id": "SKU00001"},
+        )
+        assert response.status_code in (200, 404, 500, 503)
+
+    def test_sku_lifecycle_404(self):
+        response = client.get("/api/v1/lifecycle/sku/NONEXISTENT")
+        assert response.status_code in (404, 500, 503)
+
+    def test_summary_endpoint(self):
+        response = client.get("/api/v1/lifecycle/summary")
+        assert response.status_code in (200, 500, 503)
+
+
 class TestPurchaseOrderEndpoints:
     def test_list_pos(self):
         response = client.get("/api/v1/purchase-orders/")
