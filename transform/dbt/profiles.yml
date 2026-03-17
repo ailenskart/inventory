@@ -1,0 +1,18 @@
+lenskart_retail:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../../data/dev.duckdb"
+      schema: main
+      threads: 4
+
+    postgres:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: lenskart
+      pass: lenskart_dev
+      dbname: lenskart_retail
+      schema: public
+      threads: 4
