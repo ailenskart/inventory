@@ -24,10 +24,10 @@ OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 LITE_MODE = os.environ.get("LENSKART_DATA_LITE", "0") == "1"
 
-NUM_STORES = 10 if LITE_MODE else 2000
-NUM_SKUS = 100 if LITE_MODE else 2000
+NUM_STORES = 200 if LITE_MODE else 2000
+NUM_SKUS = 500 if LITE_MODE else 2000
 NUM_VENDORS = 12
-NUM_DAYS = 90 if LITE_MODE else 365
+NUM_DAYS = 120 if LITE_MODE else 365
 START_DATE = date(2024, 1, 1)
 
 # ─── 60+ Indian cities with real coordinates ────────────────────────────────

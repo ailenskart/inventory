@@ -13,7 +13,12 @@ export LENSKART_DATA_LITE="${LENSKART_DATA_LITE:-1}"
 
 echo "=== Lenskart Retail Intelligence — Railway Startup ==="
 
-# Bootstrap data if DB doesn't exist yet
+# Always rebuild data on deploy to pick up latest generator changes
+if [ -f "$DB_PATH" ]; then
+    echo "Removing stale database to force fresh bootstrap..."
+    rm -f "$DB_PATH" "${DB_PATH}.wal"
+fi
+
 if [ ! -f "$DB_PATH" ]; then
     echo "[1/4] Generating synthetic data (lite=$LENSKART_DATA_LITE)..."
     python data/synthetic/generate.py || {
