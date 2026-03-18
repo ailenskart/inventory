@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.mypy_cache
+.pytest_cache
+.ruff_cache
+*.egg-info
+
+# Dev
+.env
+.env.*
+!.env.example
+.venv
+venv
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Generated data (will be created at runtime)
+data/dev.duckdb
+
+# dbt build artifacts (regenerated at runtime)
+transform/dbt/target
+transform/dbt/dbt_packages
+transform/dbt/logs
+
+# Docker
+docker-compose.prod.yml
+
+# Tests
+tests/
+
+# Infra configs (for docker-compose only)
+infra/nginx/
+infra/dagster/

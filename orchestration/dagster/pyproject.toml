@@ -1,0 +1,2 @@
+[tool.dagster]
+module_name = "orchestration.dagster.lenskart_dagster.definitions"

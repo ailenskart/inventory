@@ -1,0 +1,60 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw source data loaded as dbt seeds from synthetic CSVs"
+    schema: main_raw
+    tables:
+      - name: stores
+        description: "Store master data — location, format, cluster, capacity"
+        columns:
+          - name: store_id
+            tests: [not_null, unique]
+      - name: skus
+        description: "SKU master — product attributes, pricing, fulfillment type, lifecycle"
+        columns:
+          - name: sku_id
+            tests: [not_null, unique]
+      - name: vendors
+        description: "Vendor master — lead times, MOQ/MOV, reliability"
+        columns:
+          - name: vendor_id
+            tests: [not_null, unique]
+      - name: daily_sales
+        description: "Daily sales transactions at store × SKU granularity"
+      - name: daily_inventory
+        description: "Inventory snapshots — on-hand, on-display, in-storage, in-transit"
+      - name: receipts
+        description: "Goods receipts from warehouses, vendors, or inter-store transfers"
+        columns:
+          - name: receipt_id
+            tests: [not_null, unique]
+      - name: store_trials
+        description: "Try-on events — primary display_interest_signal"
+        columns:
+          - name: trial_id
+            tests: [not_null, unique]
+      - name: eye_tests
+        description: "Eye examinations — prescription_order_signal proxy"
+        columns:
+          - name: test_id
+            tests: [not_null, unique]
+      - name: transfers
+        description: "Inter-store inventory transfers (out/in pairs per transfer_id)"
+      - name: purchase_orders
+        description: "Purchase orders to vendors"
+        columns:
+          - name: po_id
+            tests: [not_null, unique]
+      - name: store_traffic
+        description: "Daily footfall per store"
+      - name: calendar
+        description: "Calendar dimension with seasonality and festive flags"
+        columns:
+          - name: date_key
+            tests: [not_null, unique]
+      - name: promotions
+        description: "Promotional events — seasonal sales, clearance, BOGO"
+        columns:
+          - name: promo_id
+            tests: [not_null, unique]

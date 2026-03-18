@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: dim_store
+    description: "Store dimension with cluster profiles and capacity"
+    columns:
+      - name: store_id
+        description: "Unique store identifier"
+        tests: [not_null, unique]
+      - name: store_cluster
+        description: "Demand profile cluster"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['METRO_HIGH', 'METRO_MID', 'TIER1_HIGH', 'TIER1_MID', 'TIER2', 'KIOSK']
+      - name: store_format
+        tests:
+          - accepted_values:
+              values: ['large', 'medium', 'small', 'kiosk']
+      - name: store_type
+        tests:
+          - accepted_values:
+              values: ['COCO', 'FOFO']
+
+  - name: dim_sku
+    description: "SKU dimension with product attributes and fulfillment classification"
+    columns:
+      - name: sku_id
+        tests: [not_null, unique]
+      - name: category
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['eyeglasses', 'sunglasses', 'contact_lenses', 'computer_glasses']
+      - name: sku_type
+        description: "display_dummy (try-on only) or physical_sell (sold from stock)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['display_dummy', 'physical_sell']
+      - name: fulfillment_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['order_capture', 'direct_sell']
+      - name: sales_channel
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['prescription', 'walk_in']
+      - name: lifecycle_stage
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['new', 'active', 'aging', 'eol']
+      - name: vendor_id
+        tests: [not_null]
+      - name: mrp
+        tests: [not_null]
+
+  - name: dim_vendor
+    description: "Vendor dimension with supply chain attributes"
+    columns:
+      - name: vendor_id
+        tests: [not_null, unique]
+      - name: vendor_type
+        tests:
+          - accepted_values:
+              values: ['manufacturer', 'distributor']
+
+  - name: dim_calendar
+    description: "Calendar dimension with seasonality and festive flags"
+    columns:
+      - name: date_key
+        tests: [not_null, unique]
+      - name: season
+        tests:
+          - accepted_values:
+              values: ['summer', 'monsoon', 'winter', 'autumn']
