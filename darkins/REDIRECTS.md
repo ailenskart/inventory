@@ -11,7 +11,7 @@ mechanical. (Two were tidied: see the exceptions table.)
 | `/` | `/` |
 | `/collections` | `/products` |
 | `/collections/bar-collection` | `/products?category=bars` |
-| `/collections/artisanal-dark-chocolate-bars` | `/products?badge=bestseller` |
+| `/collections/artisanal-dark-chocolate-bars` | `/products` (bestsellers are badged in the grid) |
 | `/collections/combo-packs` | `/products?category=combos` |
 | `/collections/tasting-packs` | `/products?category=tasting-packs` |
 | `/collections/dragees` | `/products?category=dragees` |

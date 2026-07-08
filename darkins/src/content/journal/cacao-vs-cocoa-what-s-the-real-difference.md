@@ -72,6 +72,6 @@ sourceUrl: "https://darkins.in/blogs/blog/cacao-vs-cocoa-what-s-the-real-differe
 <h3  ><strong  >The Final Verdict?</strong></h3>
 <p  >Whether you’re team <em  >cacao</em> or team <em  >cocoa</em>, both start from the same place; a humble bean with centuries of history, flavour, and culture packed inside.</p>
 <p  >At Darkins, we lean into our roots by crafting every bar from Indian-origin cacao, roasted to perfection, and letting the bean speak for itself.</p>
-<p  >So next time you bite into a bar, sip on a <a href="/products/chocolate-drinks" target="_blank" title="Darkins Hot Chocolate powder mixes" rel="noopener">hot chocolate</a>, or sneak a spoon of cocoa into your midnight baking, you’ll know exactly where it all began.</p>
+<p  >So next time you bite into a bar, sip on a <a href="/products?category=drinks" target="_blank" title="Darkins Hot Chocolate powder mixes" rel="noopener">hot chocolate</a>, or sneak a spoon of cocoa into your midnight baking, you’ll know exactly where it all began.</p>
 <p  ><strong  >Real cacao. Real chocolate. Real love.</strong><br  >That's the Darkins way.</p>]]>
     

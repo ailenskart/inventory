@@ -1,0 +1,37 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/images/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/fonts/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
+  "redirects": [
+    { "source": "/collections", "destination": "/products", "permanent": true },
+    { "source": "/collections/experiences-tours", "destination": "/experiences", "permanent": true },
+    { "source": "/collections/bar-collection", "destination": "/products?category=bars", "permanent": true },
+    { "source": "/collections/tasting-packs", "destination": "/products?category=tasting-packs", "permanent": true },
+    { "source": "/collections/combo-packs", "destination": "/products?category=combos", "permanent": true },
+    { "source": "/collections/dragees", "destination": "/products?category=dragees", "permanent": true },
+    { "source": "/collections/spreads", "destination": "/products?category=spreads", "permanent": true },
+    { "source": "/collections/gifting", "destination": "/products?category=gifting", "permanent": true },
+    { "source": "/collections/chocolate-drinks", "destination": "/products?category=drinks", "permanent": true },
+    { "source": "/collections/covertures", "destination": "/products?category=couvertures", "permanent": true },
+    { "source": "/collections/:handle", "destination": "/products", "permanent": true },
+    { "source": "/pages/bean-to-bar", "destination": "/process", "permanent": true },
+    { "source": "/pages/the-makers", "destination": "/story", "permanent": true },
+    { "source": "/pages/contact-us", "destination": "/contact", "permanent": true },
+    { "source": "/pages/faqs", "destination": "/story#faq", "permanent": true },
+    { "source": "/pages/home", "destination": "/", "permanent": true },
+    { "source": "/blogs/blog/:slug", "destination": "/journal/:slug", "permanent": true },
+    { "source": "/blogs/:blog", "destination": "/journal", "permanent": true },
+    { "source": "/products/valentines-artisanal-chocolate-gift-box-copy", "destination": "/products/valentines-artisanal-chocolate-gift-box", "permanent": true },
+    { "source": "/products/the-curtain-raiser-best-selling-pack-of-3-darkins-bar", "destination": "/products/the-curtain-raiser-pack-of-3", "permanent": true },
+    { "source": "/products/chocolate-factory-tour-valentine-edition-7th-feb-2026", "destination": "/experiences", "permanent": true }
+  ]
+}

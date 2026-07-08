@@ -1,0 +1,51 @@
+---
+// Editorial product card: oversized % numeral, image swap to lifestyle shot on
+// hover, tasting notes sliding in. data-* attributes drive the pure-CSS
+// catalog filters.
+import type { Product } from '../lib/site';
+import { pctBucket } from '../lib/site';
+import Pic from './Pic.astro';
+import Badges from './Badges.astro';
+
+interface Props {
+  product: Product;
+  eager?: boolean;
+}
+const { product: p, eager = false } = Astro.props;
+const main = p.images[0];
+const alt = p.images.find((i) => i.role === 'lifestyle') ?? (p.images[1]?.role === 'packshot' ? p.images[1] : undefined);
+---
+
+<article
+  class="product-card group"
+  data-cat={p.category}
+  data-pct={pctBucket(p)}
+  data-sugarfree={p.sugarfree ? '' : undefined}
+  data-vegan={p.vegan ? '' : undefined}
+>
+  <a href={`/products/${p.id}`} class="block">
+    <div class="card-media aspect-square">
+      {main && <Pic img={main} alt={p.name} sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw" loading={eager ? 'eager' : 'lazy'} class="img-main h-full w-full object-cover" />}
+      {alt && <Pic img={alt} alt="" sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw" class="img-alt h-full w-full object-cover" />}
+      {
+        p.cacaoPercent != null && (
+          <span aria-hidden="true" class="pct pointer-events-none absolute -bottom-2 left-2 text-[clamp(3.5rem,7vw,5.5rem)] text-(--color-cream) opacity-90 drop-shadow-[0_2px_12px_rgba(20,13,10,0.8)]">
+            {p.cacaoPercent}<span class="text-[0.5em]">%</span>
+          </span>
+        )
+      }
+      <div class="card-notes hidden md:block" aria-hidden="true">
+        <p class="text-[13px] text-(--color-cream-dim)">
+          {p.tastingNotes.join(' · ')}
+        </p>
+      </div>
+    </div>
+    <div class="pt-4">
+      <Badges badges={p.badges} class="mb-1.5" />
+      <h3 class="font-display text-lg leading-snug font-medium">{p.name}</h3>
+      <p class="mt-1 text-sm text-(--color-cream-faint)">
+        {p.weight && <span>{p.weight} · </span>}MRP ₹{p.mrp}
+      </p>
+    </div>
+  </a>
+</article>

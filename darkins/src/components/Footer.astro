@@ -1,0 +1,106 @@
+---
+import { SITE } from '../lib/site';
+import retailers from '../data/retailers.json';
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t hairline bg-(--color-cacao-900)">
+  <!-- partner band -->
+  <div id="where-to-buy" class="mx-auto max-w-7xl scroll-mt-24 px-4 py-12 sm:px-6">
+    <p class="kicker mb-6">Where to buy</p>
+    <ul class="grid grid-cols-3 items-center gap-x-6 gap-y-8 sm:grid-cols-5 lg:grid-cols-9">
+      {
+        retailers.map((r) => (
+          <li class="flex justify-center">
+            {r.url ? (
+              <a href={r.url} target="_blank" rel="noopener" data-retailer={r.id} title={r.name} class="opacity-80 transition-opacity hover:opacity-100">
+                <img src={r.logo} alt={r.name} width="72" height="72" loading="lazy" class="h-14 w-14 rounded-xl bg-white object-contain p-1.5 sm:h-16 sm:w-16" />
+              </a>
+            ) : (
+              <img src={r.logo} alt={r.name} title={`${r.name} — in-store`} width="72" height="72" loading="lazy" class="h-14 w-14 rounded-xl bg-white object-contain p-1.5 opacity-70 sm:h-16 sm:w-16" />
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="mx-auto grid max-w-7xl gap-10 border-t hairline px-4 py-12 sm:px-6 md:grid-cols-3">
+    <div>
+      <p class="font-display text-2xl font-semibold">Darkins<span class="text-(--color-ember-bright)">.</span></p>
+      <p class="mt-3 max-w-xs text-sm text-(--color-cream-dim)">
+        Bean-to-bar chocolate from single-origin Indian cacao. Made by hand in Delhi.
+      </p>
+      <ul class="mt-5 flex gap-4" aria-label="Social media">
+        <li><a href={SITE.social.instagram} target="_blank" rel="noopener" class="text-sm text-(--color-cream-dim) underline-offset-3 hover:text-(--color-cream) hover:underline">Instagram</a></li>
+        <li><a href={SITE.social.facebook} target="_blank" rel="noopener" class="text-sm text-(--color-cream-dim) underline-offset-3 hover:text-(--color-cream) hover:underline">Facebook</a></li>
+        <li><a href={SITE.social.x} target="_blank" rel="noopener" class="text-sm text-(--color-cream-dim) underline-offset-3 hover:text-(--color-cream) hover:underline">X</a></li>
+        <li><a href={SITE.social.youtube} target="_blank" rel="noopener" class="text-sm text-(--color-cream-dim) underline-offset-3 hover:text-(--color-cream) hover:underline">YouTube</a></li>
+      </ul>
+    </div>
+
+    <nav aria-label="Footer">
+      <p class="kicker mb-4">Explore</p>
+      <ul class="grid grid-cols-2 gap-2 text-sm">
+        {
+          [
+            ['All products', '/products'],
+            ['Bean to bar', '/process'],
+            ['Our story', '/story'],
+            ['Factory tours', '/experiences'],
+            ['Journal', '/journal'],
+            ['Contact', '/contact'],
+            ['Wholesale', '/contact#wholesale'],
+            ['Styleguide', '/styleguide'],
+          ].map(([label, href]) => (
+            <li>
+              <a href={href} class="text-(--color-cream-dim) underline-offset-3 hover:text-(--color-cream) hover:underline">
+                {label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div>
+      <p class="kicker mb-4">Stay in the loop</p>
+      <p class="text-sm text-(--color-cream-dim)">New bars, tour dates and studio news. No spam.</p>
+      <!-- Newsletter stub: replace the mailto flow with a Mailchimp/Brevo form
+           action when the account is set up. -->
+      <form class="mt-4 flex gap-2" data-newsletter>
+        <label class="sr-only" for="newsletter-email">Email address</label>
+        <input
+          id="newsletter-email"
+          type="email"
+          name="email"
+          required
+          placeholder="you@example.com"
+          autocomplete="email"
+          class="w-full min-w-0 rounded-full border border-(--color-cream)/20 bg-transparent px-4 py-2.5 text-sm placeholder:text-(--color-cream-faint) focus:border-(--color-cream)/50 focus:outline-hidden"
+        />
+        <button type="submit" class="btn btn-primary px-5 py-2.5 text-sm">Subscribe</button>
+      </form>
+      <p class="mt-6 text-xs text-(--color-cream-faint)">
+        Darkins Chocolate Pvt. Ltd. · {SITE.address}<br />
+        FSSAI Lic. No. — <span title="Add the licence number before launch">TODO</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="border-t hairline">
+    <p class="mx-auto max-w-7xl px-4 py-5 text-xs text-(--color-cream-faint) sm:px-6">
+      © {year} Darkins Chocolates. Grown in India. Ground in Delhi.
+    </p>
+  </div>
+</footer>
+
+<script>
+  import { SITE } from '../lib/site';
+  // Stub: hands the signup to the studio inbox until a list provider is wired.
+  document.querySelector<HTMLFormElement>('[data-newsletter]')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = (e.currentTarget as HTMLFormElement).email.value;
+    location.href = `mailto:${SITE.email}?subject=${encodeURIComponent('Newsletter signup')}&body=${encodeURIComponent(`Please add ${email} to the Darkins newsletter.`)}`;
+  });
+</script>

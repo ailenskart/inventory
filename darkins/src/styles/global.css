@@ -1,0 +1,334 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Darkins design tokens — "Dark, Indian, Honest."
+   Near-black cacao base, warm cream, ember red (evolved from brand #86231f),
+   metallic gold micro-accents for gifting.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-cacao-950: #140d0a;
+  --color-cacao-900: #1e1410;
+  --color-cacao-850: #251913;
+  --color-cacao-800: #2e2018;
+  --color-cacao-700: #453224;
+
+  --color-cream: #f4ede4;
+  --color-cream-dim: #cbbead;
+  --color-cream-faint: #a3947f;
+
+  --color-ember: #9e2b20; /* CTAs, highlights */
+  --color-ember-bright: #c0442f; /* hover / big numerals on dark */
+  --color-ember-soft: #e0765c; /* small text on dark (AA-safe) */
+  --color-ember-deep: #86231f; /* original brand red */
+  --color-gold: #c8a24b;
+
+  --color-paper: #f4ede4; /* light contrast-break sections */
+  --color-paper-shade: #e9dfd1;
+
+  --font-display: 'Fraunces', 'Fraunces Fallback', Georgia, serif;
+  --font-sans: 'Inter', 'Inter Fallback', Arial, system-ui, sans-serif;
+
+  --text-display: clamp(2.75rem, 8vw, 7rem);
+  --text-display-sm: clamp(2rem, 5vw, 4rem);
+  --text-kicker: 0.8125rem;
+
+  --ease-tactile: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-var.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-italic-var.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* metric-matched fallbacks (capsize data) — no reflow while webfonts load */
+@font-face {
+  font-family: 'Fraunces Fallback';
+  src: local('Georgia');
+  size-adjust: 105.2%;
+  ascent-override: 92.96%;
+  descent-override: 24.24%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107.12%;
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+}
+
+/* ---- base ---------------------------------------------------------------- */
+@layer base {
+html {
+  scroll-behavior: smooth;
+  accent-color: var(--color-ember);
+}
+body {
+  background: var(--color-cacao-950);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+::selection {
+  background: var(--color-ember);
+  color: var(--color-cream);
+}
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* subtle film-grain overlay, once, site-wide */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+} /* end base layer */
+
+@layer components {
+/* ---- typography helpers -------------------------------------------------- */
+.font-display {
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 1;
+  letter-spacing: -0.015em;
+}
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 1;
+  font-weight: 540;
+  font-size: var(--text-display);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.display-sm {
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 144, 'SOFT' 40, 'WONK' 1;
+  font-weight: 540;
+  font-size: var(--text-display-sm);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.kicker {
+  font-size: var(--text-kicker);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--kicker-color, var(--color-cream-faint));
+}
+.pct {
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 0;
+  font-weight: 620;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-feature-settings: 'lnum';
+}
+.prose-dark {
+  color: var(--color-cream-dim);
+  max-width: 65ch;
+}
+.prose-dark strong { color: var(--color-cream); }
+.prose-dark a { color: var(--color-cream); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---- buttons -------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+  padding: 0.9rem 1.5rem;
+  border-radius: 999px;
+  transition: transform 0.25s var(--ease-tactile), background-color 0.2s, border-color 0.2s, box-shadow 0.25s var(--ease-tactile);
+  will-change: transform;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--color-ember);
+  color: var(--color-cream);
+  box-shadow: 0 0 0 0 rgb(158 43 32 / 0);
+}
+.btn-primary:hover {
+  background: var(--color-ember-bright);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -8px rgb(192 68 47 / 0.55);
+}
+.btn-ghost {
+  border: 1px solid rgb(244 237 228 / 0.25);
+  color: var(--color-cream);
+}
+.btn-ghost:hover {
+  border-color: rgb(244 237 228 / 0.6);
+  transform: translateY(-2px);
+}
+.btn-paper { /* for light sections */
+  background: var(--color-cacao-950);
+  color: var(--color-cream);
+}
+.btn-paper:hover { background: var(--color-cacao-800); transform: translateY(-2px); }
+
+/* ---- reveal-on-scroll (IntersectionObserver adds .is-in) ------------------
+   Gated behind html.js so nothing is hidden when JavaScript is unavailable. */
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--ease-tactile), transform 0.7s var(--ease-tactile);
+}
+html.js .reveal.is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html.js .reveal { opacity: 1; transform: none; transition: none; }
+  .btn, .btn:hover, .btn:active { transform: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ---- marquee (used once, home manifesto strip) ---------------------------- */
+.marquee { overflow: hidden; white-space: nowrap; }
+.marquee-track {
+  display: inline-block;
+  animation: marquee 36s linear infinite;
+  padding-right: 2rem;
+}
+@keyframes marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+
+/* ---- product card --------------------------------------------------------- */
+.card-media { position: relative; overflow: hidden; background: var(--color-cacao-900); }
+.card-media img { transition: opacity 0.45s var(--ease-tactile), transform 0.6s var(--ease-tactile); }
+.card-media .img-alt { position: absolute; inset: 0; opacity: 0; }
+@media (hover: hover) {
+  .product-card:hover .card-media .img-alt { opacity: 1; }
+  .product-card:hover .card-media .img-main:not(:only-child) { opacity: 0; }
+  .product-card:hover .card-media img { transform: scale(1.03); }
+}
+.card-notes {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 2.5rem 1rem 0.9rem;
+  background: linear-gradient(to top, rgb(20 13 10 / 0.92), transparent);
+  transform: translateY(100%);
+  transition: transform 0.4s var(--ease-tactile);
+}
+@media (hover: hover) {
+  .product-card:hover .card-notes { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-media img, .card-notes { transition: none; }
+}
+
+/* ---- /products pure-CSS filtering (works with JS disabled) ---------------
+   Radios/checkboxes in the filter <form> drive visibility via :has().     */
+#catalog:has(#cat-bars:checked)          .product-card:not([data-cat='bars']),
+#catalog:has(#cat-tasting-packs:checked) .product-card:not([data-cat='tasting-packs']),
+#catalog:has(#cat-combos:checked)        .product-card:not([data-cat='combos']),
+#catalog:has(#cat-dragees:checked)       .product-card:not([data-cat='dragees']),
+#catalog:has(#cat-spreads:checked)       .product-card:not([data-cat='spreads']),
+#catalog:has(#cat-drinks:checked)        .product-card:not([data-cat='drinks']),
+#catalog:has(#cat-gifting:checked)       .product-card:not([data-cat='gifting']),
+#catalog:has(#cat-couvertures:checked)   .product-card:not([data-cat='couvertures']),
+#catalog:has(#pct-mid:checked)  .product-card:not([data-pct='mid']),
+#catalog:has(#pct-high:checked) .product-card:not([data-pct='high']),
+#catalog:has(#pct-max:checked)  .product-card:not([data-pct='max']),
+#catalog:has(#diet-sugarfree:checked) .product-card:not([data-sugarfree]),
+#catalog:has(#diet-vegan:checked)     .product-card:not([data-vegan]) {
+  display: none;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgb(244 237 228 / 0.2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-cream-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+  user-select: none;
+}
+.filter-chip:hover { border-color: rgb(244 237 228 / 0.5); color: var(--color-cream); }
+input:checked + .filter-chip {
+  background: var(--color-cream);
+  border-color: var(--color-cream);
+  color: var(--color-cacao-950);
+}
+input:focus-visible + .filter-chip {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+.sr-radio {
+  position: absolute;
+  width: 1px; height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+
+/* ---- process page (paper theme) ------------------------------------------ */
+.theme-paper {
+  background: var(--color-paper);
+  color: var(--color-cacao-950);
+}
+/* the chrome stays dark on paper pages */
+.theme-paper > :is(header, footer, dialog) { color: var(--color-cream); --kicker-color: var(--color-cream-faint); }
+.theme-paper { --kicker-color: #6b5c46; }
+/* dark contrast-break sections inside paper pages */
+.theme-paper .section-dark { --kicker-color: var(--color-cream-faint); }
+.theme-paper ::selection { background: var(--color-cacao-950); color: var(--color-paper); }
+
+/* scroll progress bar (CSS scroll-driven where supported) */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--color-ember);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: 70;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: grow-progress linear forwards;
+    animation-timeline: scroll(root);
+  }
+  @keyframes grow-progress { to { transform: scaleX(1); } }
+}
+
+/* ---- misc ------------------------------------------------------------------ */
+.hairline { border-color: rgb(244 237 228 / 0.12); }
+.theme-paper .hairline { border-color: rgb(20 13 10 / 0.15); }
+.img-frame { background: var(--color-cacao-900); }
+
+} /* end components layer */

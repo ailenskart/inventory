@@ -24,9 +24,9 @@
       "phone": "+91 88003 35220"
     },
     "images": [
-      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-1", "widths": [480, 960, 1080], "alt": "Guests at the Darkins chocolate factory tour" },
-      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-3", "widths": [480, 960, 1080], "alt": "Chocolate tasting session at the Darkins studio" },
-      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-4", "widths": [480, 960, 1080], "alt": "Bean-to-bar equipment at the Darkins micro-factory" }
+      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-6", "widths": [480, 960, 1080], "alt": "Guests decorating their own chocolate bars at the Darkins factory tour" },
+      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-4", "widths": [480, 960, 1080], "alt": "A tour group watching the roasting demonstration at the Darkins micro-factory" },
+      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-3", "widths": [480, 960, 1080], "alt": "The winnowing machine demonstration at the Darkins studio" }
     ]
   }
 ]

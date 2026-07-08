@@ -34,7 +34,7 @@ sourceUrl: "https://darkins.in/blogs/blog/beyond-the-bar-5-must-try-dishes-that-
 <li ><span >1 cup dates</span></li>
 <li ><span >1/2 cup almonds</span></li>
 <li ><span >1/4 cup chia seeds</span></li>
-<li ><span >2 cups of <a title="Dark Chocolate selections" href="/products/bar-collection/classic#MainContent">dark chocolate</a></span></li>
+<li ><span >2 cups of <a title="Dark Chocolate selections" href="/products?category=bars">dark chocolate</a></span></li>
 <li ><span >Cocoa powder (optional)</span></li>
 </ul>
 <div >
@@ -64,7 +64,7 @@ sourceUrl: "https://darkins.in/blogs/blog/beyond-the-bar-5-must-try-dishes-that-
 <li ><span >1/2 teaspoon salt</span></li>
 <li ><span >1/4 cup dark baking cocoa</span></li>
 <li ><span >1 teaspoon vanilla extract</span></li>
-<li ><span ><a title="Roasted Coffe bean covered with Dark Chocolate" href="/products/dragees/products/coffee-dragees" target="_blank">Chopped chocolate-covered espresso beans</a>, optional</span></li>
+<li ><span ><a title="Roasted Coffe bean covered with Dark Chocolate" href="/products?category=dragees" target="_blank">Chopped chocolate-covered espresso beans</a>, optional</span></li>
 </ul>
 <div >
 <p ><span >Directions:</span></p>
@@ -99,7 +99,7 @@ sourceUrl: "https://darkins.in/blogs/blog/beyond-the-bar-5-must-try-dishes-that-
 <p ><span >     filling:</span></p>
 </div>
 <ul >
-<li ><span >2 cups <a title="Dark Chocolates" href="/products/bar-collection" target="_blank">dark chocolate</a>, chopped</span></li>
+<li ><span >2 cups <a title="Dark Chocolates" href="/products?category=bars" target="_blank">dark chocolate</a>, chopped</span></li>
 <li ><span >3/4 cup heavy whipping cream</span></li>
 <li ><span >1 teaspoon vanilla extract</span></li>
 <li ><span >1/2 teaspoon large-crystal sea salt</span></li>
@@ -124,7 +124,7 @@ sourceUrl: "https://darkins.in/blogs/blog/beyond-the-bar-5-must-try-dishes-that-
 <ul >
 <li ><span >100g unsalted butter, softened, plus extra for the tins</span></li>
 <li ><span >cocoa powder, for dusting</span></li>
-<li ><span >100g <a title="Baking Dark Chocolate" href="/products/covertures" target="_blank">dark chocolate</a></span></li>
+<li ><span >100g <a title="Baking Dark Chocolate" href="/products?category=couvertures" target="_blank">dark chocolate</a></span></li>
 <li ><span >2 eggs, plus two egg yolks</span></li>
 <li ><span >150g golden caster sugar</span></li>
 <li ><span >50g plain flour</span></li>
@@ -149,7 +149,7 @@ sourceUrl: "https://darkins.in/blogs/blog/beyond-the-bar-5-must-try-dishes-that-
 <p ><span >Ingredients:</span></p>
 </div>
 <ul >
-<li ><span >250g <a title="Baking Dark Chocolate" href="/products/covertures" target="_blank">dark chocolate</a>, roughly chopped</span></li>
+<li ><span >250g <a title="Baking Dark Chocolate" href="/products?category=couvertures" target="_blank">dark chocolate</a>, roughly chopped</span></li>
 <li ><span >150g butter, plus extra for the tin</span></li>
 <li ><span >5 eggs, separated</span></li>
 <li ><span >150g caster sugar</span></li>

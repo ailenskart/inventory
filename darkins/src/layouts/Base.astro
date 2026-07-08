@@ -1,0 +1,119 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import RetailerPanel from '../components/RetailerPanel.astro';
+import { SITE } from '../lib/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  jsonLd?: object[];
+  theme?: 'dark' | 'paper';
+}
+const {
+  title,
+  description = SITE.description,
+  ogImage = '/images/site/blog-banner-960w.webp',
+  jsonLd = [],
+  theme = 'dark',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE.domain).href;
+const ogAbs = new URL(ogImage, SITE.domain).href;
+
+const orgLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE.name,
+  url: SITE.domain,
+  logo: new URL('/images/site/logo-darkins-480w.webp', SITE.domain).href,
+  email: SITE.email,
+  telephone: SITE.phone,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '2nd Floor, B-108, Pocket B, Okhla Phase I',
+    addressLocality: 'New Delhi',
+    postalCode: '110020',
+    addressCountry: 'IN',
+  },
+  sameAs: Object.values(SITE.social),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <!-- Fonts preload for zero swap-flash on fast connections; on slow ones
+         the metric-matched fallback faces keep layout identical (no CLS). -->
+    <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogAbs} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogAbs} />
+    <meta name="theme-color" content={theme === 'paper' ? '#f4ede4' : '#140d0a'} />
+    <script type="application/ld+json" set:html={JSON.stringify(orgLd)} />
+    {jsonLd.map((ld) => <script type="application/ld+json" set:html={JSON.stringify(ld)} />)}
+  </head>
+  <body class={theme === 'paper' ? 'theme-paper' : ''}>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-100 focus:rounded-full focus:bg-(--color-ember) focus:px-5 focus:py-3 focus:text-(--color-cream)"
+    >
+      Skip to content
+    </a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <RetailerPanel />
+
+    <script>
+      // Reveal-on-scroll. Elements opt in with .reveal; stagger with
+      // style="transition-delay". Respects prefers-reduced-motion via CSS.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-in');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { rootMargin: '0px 0px -8% 0px' }
+      );
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+      // Analytics stub — outbound retailer clicks carry data-retailer.
+      // Wire GA4 or Plausible by defining window.gtag / window.plausible;
+      // until then events land in no-op.
+      declare global {
+        interface Window { plausible?: (n: string, o?: object) => void; gtag?: (...a: unknown[]) => void }
+      }
+      document.addEventListener('click', (e) => {
+        const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-retailer]');
+        if (!a) return;
+        const props = { retailer: a.dataset.retailer!, href: a.href, page: location.pathname };
+        window.plausible?.('Outbound: Retailer', { props });
+        window.gtag?.('event', 'outbound_retailer_click', props);
+      });
+    </script>
+  </body>
+</html>

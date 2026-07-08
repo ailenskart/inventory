@@ -1,0 +1,146 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import productsData from '../../data/products.json';
+import type { Product } from '../../lib/site';
+import { CATEGORIES, SITE } from '../../lib/site';
+
+const products = productsData as unknown as Product[];
+
+const itemListLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Darkins Chocolates — all products',
+  numberOfItems: products.length,
+  itemListElement: products.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: `${SITE.domain}/products/${p.id}`,
+    name: p.name,
+  })),
+};
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.domain },
+    { '@type': 'ListItem', position: 2, name: 'Products', item: `${SITE.domain}/products` },
+  ],
+};
+
+const pctFilters = [
+  ['pct-any', '', 'Any %'],
+  ['pct-mid', 'mid', 'Under 65%'],
+  ['pct-high', 'high', '65–79%'],
+  ['pct-max', 'max', '80%+'],
+] as const;
+---
+
+<Base
+  title="Products — Darkins Chocolates"
+  description="The full Darkins menu: single-origin dark chocolate bars, tasting packs, dragées, spreads, hot chocolate, couvertures and gifting. Buy on Amazon, Blinkit and partner stores."
+  jsonLd={[itemListLd, breadcrumbLd]}
+>
+  <section id="catalog" class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:py-20">
+    <p class="kicker mb-3">The menu</p>
+    <h1 class="display-sm mb-4">Everything we make</h1>
+    <p class="prose-dark mb-10">
+      {products.length} things, zero checkout. Every product hands you to a retail partner —
+      Amazon, Blinkit and friends — or straight to us on WhatsApp for the custom stuff.
+    </p>
+
+    <!-- Filters: plain radio/checkbox controls; CSS :has() does the filtering,
+         so this works with JavaScript disabled. JS only syncs the URL. -->
+    <form id="filters" class="mb-12 space-y-4" aria-label="Filter products">
+      <fieldset>
+        <legend class="kicker mb-3">Category</legend>
+        <div class="flex flex-wrap gap-2">
+          <input type="radio" name="category" id="cat-all" value="" class="sr-radio" checked />
+          <label for="cat-all" class="filter-chip">All</label>
+          {
+            Object.entries(CATEGORIES).map(([id, label]) => (
+              <>
+                <input type="radio" name="category" id={`cat-${id}`} value={id} class="sr-radio" />
+                <label for={`cat-${id}`} class="filter-chip">{label}</label>
+              </>
+            ))
+          }
+        </div>
+      </fieldset>
+      <div class="flex flex-wrap gap-x-10 gap-y-4">
+        <fieldset>
+          <legend class="kicker mb-3">Cacao</legend>
+          <div class="flex flex-wrap gap-2">
+            {
+              pctFilters.map(([id, value, label]) => (
+                <>
+                  <input type="radio" name="pct" id={id} value={value} class="sr-radio" checked={value === ''} />
+                  <label for={id} class="filter-chip">{label}</label>
+                </>
+              ))
+            }
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="kicker mb-3">Dietary</legend>
+          <div class="flex flex-wrap gap-2">
+            <input type="checkbox" name="sugarfree" id="diet-sugarfree" value="1" class="sr-radio" />
+            <label for="diet-sugarfree" class="filter-chip">Sugarfree</label>
+            <input type="checkbox" name="vegan" id="diet-vegan" value="1" class="sr-radio" />
+            <label for="diet-vegan" class="filter-chip">Vegan</label>
+          </div>
+        </fieldset>
+      </div>
+      <noscript>
+        <p class="text-sm text-(--color-cream-faint)">Filters work instantly — no reload needed.</p>
+      </noscript>
+    </form>
+
+    <h2 class="sr-only">All products</h2>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4 lg:gap-y-14" data-grid>
+      {products.map((p, i) => <ProductCard product={p} eager={i < 4} />)}
+    </div>
+
+    <p class="mt-16 hidden text-center text-(--color-cream-dim)" data-empty>
+      Nothing matches that combination — chocolate has limits after all.
+      <button type="button" class="ml-2 underline underline-offset-3" data-reset>Reset filters</button>
+    </p>
+  </section>
+
+  <script>
+    // Progressive enhancement: keep filter state in the URL (?category=bars&
+    // pct=high&sugarfree=1) and show the empty state. Filtering itself is CSS.
+    const form = document.getElementById('filters') as HTMLFormElement;
+    const cards = [...document.querySelectorAll<HTMLElement>('.product-card')];
+    const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+
+    const params = new URLSearchParams(location.search);
+    for (const name of ['category', 'pct']) {
+      const v = params.get(name);
+      if (v === null) continue;
+      const input = form.querySelector<HTMLInputElement>(`input[name="${name}"][value="${CSS.escape(v)}"]`);
+      if (input) input.checked = true;
+    }
+    for (const name of ['sugarfree', 'vegan']) {
+      if (params.get(name)) (form.querySelector(`input[name="${name}"]`) as HTMLInputElement).checked = true;
+    }
+
+    function update() {
+      const data = new FormData(form);
+      const q = new URLSearchParams();
+      for (const key of ['category', 'pct', 'sugarfree', 'vegan']) {
+        const v = data.get(key);
+        if (v) q.set(key, String(v));
+      }
+      history.replaceState(null, '', q.size ? `?${q}` : location.pathname);
+      const anyVisible = cards.some((c) => c.offsetParent !== null);
+      empty.classList.toggle('hidden', anyVisible);
+    }
+    form.addEventListener('change', update);
+    document.querySelector('[data-reset]')?.addEventListener('click', () => {
+      form.reset();
+      update();
+    });
+    update();
+  </script>
+</Base>

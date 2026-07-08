@@ -12,7 +12,7 @@ sourceUrl: "https://darkins.in/blogs/blog/this-is-why-you-should-be-eating-choco
 <div >
 <span  ></span>
 <div >
-<p >And when we say chocolate, we mean dark chocolate. The one thats rich in nutrients and not stuffed with sugar. <a href="/products/bar-collection" title="Dark Chocolates" target="_blank">Dark chocolate</a> is usually between 50-90% cacao content and since it doesn't have any milk solids or alternatives, its vegan by nature on its own.</p>
+<p >And when we say chocolate, we mean dark chocolate. The one thats rich in nutrients and not stuffed with sugar. <a href="/products?category=bars" title="Dark Chocolates" target="_blank">Dark chocolate</a> is usually between 50-90% cacao content and since it doesn't have any milk solids or alternatives, its vegan by nature on its own.</p>
 <p > </p>
 </div>
 <div >
@@ -40,7 +40,7 @@ sourceUrl: "https://darkins.in/blogs/blog/this-is-why-you-should-be-eating-choco
 <div ><strong></strong></div>
 <div ><span ></span></div>
 <div >
-<p ><span >No, it’s not your imagination — </span><span >it is said</span><span > that eating dark chocolate with high percentages of cacao, such as <a title="70% Dark Chocolate - Andhra" href="/products/bar-collection/products/70-dark-chocolate-single-origin-cacao-from-andhra-pradesh" target="_blank">70 percent dark chocolate</a>, may benefit your brain. </span></p>
+<p ><span >No, it’s not your imagination — </span><span >it is said</span><span > that eating dark chocolate with high percentages of cacao, such as <a title="70% Dark Chocolate - Andhra" href="/products/70-single-origin-dark-chocolate-andhra-pradesh" target="_blank">70 percent dark chocolate</a>, may benefit your brain. </span></p>
 </div>
 <div >
 <p ><span >Memory and learning can also be enhanced by chocolate consumption</span><span > as the flavonoids tend to accumulate in areas of the brain responsible for those functions.</span></p>
@@ -90,7 +90,7 @@ sourceUrl: "https://darkins.in/blogs/blog/this-is-why-you-should-be-eating-choco
 <p ><span >D</span><span >ark chocolate </span><span >(not</span><span > milk and white chocolate</span><span >)</span><span > is rich in </span><span >antioxidants</span><span > and packed with nutrients, making this bittersweet treat a superfood with a number of benefits.</span></p>
 </div>
 <div >
-<p ><span >Cacao </span><span >has </span><span >numerous antioxidants</span><span >, </span><span >more than </span><span >green tea</span><span > or red wine</span><span >. </span><span >The darker you go, the more antioxidants you’ll get</span><span >. </span><span >Your best bet is choosing a bar with <a href="/products/bar-collection/products/70-dark-chocolate-single-origin-cacao-from-andhra-pradesh" title="70-dark-chocolate-single-origin-cacao-from-andhra-pradesh" target="_blank">70 percent cacao</a> or <a href="/products/bar-collection/products/80-dark-chocolate-single-origin-cacao-from-karnataka" title="80-dark-chocolate-single-origin-cacao-from-karnataka" target="_blank">higher</a></span><span >.</span><span > </span><span >B</span><span >ars with lower percentages of cacao have more added sugar and unhealthy fats. And even though quality dark chocolate is a better choice than milk chocolate, it is still chocolate, meaning it’s high in calories and saturated fat. To avoid weight gain</span><span > consume</span><span > no more than </span><span >50</span><span > </span><span >grams</span><span > of dark chocolate per day.</span></p>
+<p ><span >Cacao </span><span >has </span><span >numerous antioxidants</span><span >, </span><span >more than </span><span >green tea</span><span > or red wine</span><span >. </span><span >The darker you go, the more antioxidants you’ll get</span><span >. </span><span >Your best bet is choosing a bar with <a href="/products/70-single-origin-dark-chocolate-andhra-pradesh" title="70-dark-chocolate-single-origin-cacao-from-andhra-pradesh" target="_blank">70 percent cacao</a> or <a href="/products/80-single-origin-dark-chocolate-karnataka" title="80-dark-chocolate-single-origin-cacao-from-karnataka" target="_blank">higher</a></span><span >.</span><span > </span><span >B</span><span >ars with lower percentages of cacao have more added sugar and unhealthy fats. And even though quality dark chocolate is a better choice than milk chocolate, it is still chocolate, meaning it’s high in calories and saturated fat. To avoid weight gain</span><span > consume</span><span > no more than </span><span >50</span><span > </span><span >grams</span><span > of dark chocolate per day.</span></p>
 </div>
 <div >
 <p ><span >Eating a diet high in flavonoids, such as chocolate, can help reduce cell damage, which is commonly linked to many diseases. Flavonoids, such as epicatechin, is thought to be responsible for its cancer-fighting qualities.</span></p>

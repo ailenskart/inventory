@@ -30,7 +30,7 @@ the old site had **one** 480px image for the whole bean-to-bar story
 - **Hero texture**: full-bleed macro of tempered dark chocolate (snap, gloss,
   melt). Nothing suitable exists; the home hero currently leans on packshots.
 - **Founder portrait**: only a 480px square of the chef exists
-  (`public/images/site/makers-chef-480w.webp`). Shoot Richa Chaudhary in the
+  (`public/images/site/makers-chef-360w.webp`). Shoot Richa Chaudhary in the
   studio, landscape and portrait crops.
 - **Origin/farm imagery**: no photography of the Puttur / Pollachi / Eluru
   farms exists. The origin block on the home page uses a typographic map
