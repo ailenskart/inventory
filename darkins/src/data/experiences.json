@@ -1,0 +1,32 @@
+[
+  {
+    "id": "chocolate-factory-tour",
+    "name": "Bean-to-Bar Chocolate Making & Tasting",
+    "tagline": "See, smell and taste your way from raw Indian cacao to a finished bar.",
+    "description": "A hands-on tour of the Darkins micro-factory. Handle cocoa beans from different regions of India, watch roasting, winnowing, grinding and tempering happen in front of you, then sit down for a guided tasting of six chocolates — with a charcuterie board of nibbles and in-house spreads to finish.",
+    "itinerary": [
+      { "title": "Introduction to chocolate", "duration": "30 min", "detail": "The history of chocolate, cacao in India, and how a bar actually gets made." },
+      { "title": "Factory tour", "duration": "20 min", "detail": "Bean storage, roasting, cracking and winnowing, grinding and conching — and a live tempering of a full batch." },
+      { "title": "Guided tasting", "duration": "30 min", "detail": "Six chocolate samples, tasted slowly and properly." },
+      { "title": "Q&A + nibbles", "duration": "20 min", "detail": "Ask the makers anything, over a charcuterie board with in-house spreads." }
+    ],
+    "duration": "About 2 hours",
+    "venue": "Darkins Studio, 2nd Floor, B-108, Pocket B, Okhla Phase I, New Delhi 110020",
+    "price": 1600,
+    "priceNote": "per person",
+    "dates": [
+      { "date": "2026-05-02", "time": "4:00 PM onwards", "label": "Saturday, 2 May 2026" }
+    ],
+    "booking": {
+      "method": "whatsapp",
+      "label": "Book on WhatsApp",
+      "url": "https://wa.me/918800335220?text=Hi%20Darkins!%20I%27d%20like%20to%20book%20the%20chocolate%20factory%20tour.",
+      "phone": "+91 88003 35220"
+    },
+    "images": [
+      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-1", "widths": [480, 960, 1080], "alt": "Guests at the Darkins chocolate factory tour" },
+      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-3", "widths": [480, 960, 1080], "alt": "Chocolate tasting session at the Darkins studio" },
+      { "base": "/images/products/chocolate-factory-tour-valentine-edition-7th-feb-2026-4", "widths": [480, 960, 1080], "alt": "Bean-to-bar equipment at the Darkins micro-factory" }
+    ]
+  }
+]

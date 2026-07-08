@@ -1,0 +1,74 @@
+[
+  {
+    "id": "amazon",
+    "name": "Amazon India",
+    "url": "https://www.amazon.in/stores/DarkinsChocolates/page/6D8DF4F9-BAC5-4D5F-890A-33F755D6420E",
+    "logo": "/images/partners/amazon-320w.webp",
+    "kind": "online",
+    "note": "Official Darkins brand store"
+  },
+  {
+    "id": "blinkit",
+    "name": "Blinkit",
+    "url": "https://blinkit.com/s/?q=darkins",
+    "logo": "/images/partners/blinkit-320w.webp",
+    "kind": "quick-commerce",
+    "note": "Delivered in minutes, in select cities"
+  },
+  {
+    "id": "zepto",
+    "name": "Zepto",
+    "url": "https://www.zeptonow.com/search?query=darkins",
+    "logo": "/images/partners/zepto-320w.webp",
+    "kind": "quick-commerce",
+    "note": "Delivered in minutes, in select cities"
+  },
+  {
+    "id": "bigbasket",
+    "name": "BigBasket",
+    "url": "https://www.bigbasket.com/pb/darkins/?nc=darkins",
+    "logo": "/images/partners/bigbasket-320w.webp",
+    "kind": "online",
+    "note": "Darkins brand page"
+  },
+  {
+    "id": "flipkart",
+    "name": "Flipkart",
+    "url": "https://www.flipkart.com/search?q=darkins%20chocolate",
+    "logo": "/images/partners/flipkart-320w.webp",
+    "kind": "online",
+    "note": "Search results"
+  },
+  {
+    "id": "urban-platter",
+    "name": "Urban Platter",
+    "url": "https://urbanplatter.in/brand/darkins/",
+    "logo": "/images/partners/urban-platter-320w.webp",
+    "kind": "online",
+    "note": "Darkins brand page"
+  },
+  {
+    "id": "the-organic-world",
+    "name": "The Organic World",
+    "url": "https://theorganicworld.com/index_products?category_id=0&brand_id=235&name=true&page=1&data_from=brand",
+    "logo": "/images/partners/the-organic-world-204w.webp",
+    "kind": "online",
+    "note": "Darkins brand page"
+  },
+  {
+    "id": "adrish",
+    "name": "Adrish",
+    "url": "",
+    "logo": "/images/partners/adrish-320w.webp",
+    "kind": "offline",
+    "note": "Zero-waste organic stores — in-store only"
+  },
+  {
+    "id": "provenance",
+    "name": "Provenance",
+    "url": "",
+    "logo": "/images/partners/provenance-320w.webp",
+    "kind": "offline",
+    "note": "Gourmet grocer — in-store only"
+  }
+]
