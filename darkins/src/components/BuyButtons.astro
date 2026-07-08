@@ -1,0 +1,31 @@
+---
+// Outbound retailer CTAs. First link is primary. data-retailer feeds the
+// outbound-click analytics stub in Base.astro.
+import type { BuyLink } from '../lib/site';
+interface Props {
+  links: BuyLink[];
+  size?: 'sm' | 'lg';
+  class?: string;
+}
+const { links, size = 'sm', class: cls } = Astro.props;
+const pad = size === 'lg' ? 'px-7 py-4 text-base' : 'px-4 py-2.5 text-sm';
+---
+
+<div class={`flex flex-wrap items-center gap-2.5 ${cls ?? ''}`}>
+  {
+    links.map((link, i) => (
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noopener"
+        data-retailer={link.retailer}
+        class={`btn ${i === 0 ? 'btn-primary' : 'btn-ghost'} ${pad}`}
+      >
+        {link.label}
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M3 9L9 3M9 3H4M9 3V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+    ))
+  }
+</div>

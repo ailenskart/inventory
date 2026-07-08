@@ -1,0 +1,63 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('journal')).sort((a, b) => +b.data.date - +a.data.date);
+const [lead, ...rest] = posts;
+const fmt = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+
+<Base
+  title="Journal — Darkins Chocolates"
+  description="Notes from the Darkins studio: cacao vs cocoa, Indian cacao history, recipes, and why dark chocolate earns its reputation."
+>
+  <header class="mx-auto max-w-7xl px-4 pt-20 pb-12 sm:px-6 lg:pt-28">
+    <p class="kicker mb-4">Journal</p>
+    <h1 class="display max-w-3xl">Notes from the studio floor.</h1>
+  </header>
+
+  {
+    lead && (
+      <section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
+        <a href={`/journal/${lead.id}`} class="group grid gap-8 rounded-2xl bg-(--color-cacao-900) p-6 sm:p-8 lg:grid-cols-2 lg:items-center">
+          <div class="img-frame overflow-hidden rounded-xl">
+            {lead.data.cover ? (
+              <img src={lead.data.cover} alt="" width="960" height="540" loading="eager" class="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-103" />
+            ) : (
+              <div class="flex aspect-video w-full items-center justify-center bg-(--color-cacao-800)"><span class="pct text-7xl text-(--color-ember-bright)">D.</span></div>
+            )}
+          </div>
+          <div>
+            <p class="kicker mb-3">Latest · {fmt(lead.data.date)}</p>
+            <h2 class="display-sm group-hover:underline underline-offset-6 decoration-2 decoration-(--color-ember-bright)">{lead.data.title}</h2>
+            <p class="prose-dark mt-4">{lead.data.excerpt}</p>
+            <p class="btn btn-ghost mt-7">Read it</p>
+          </div>
+        </a>
+      </section>
+    )
+  }
+
+  <section class="mx-auto max-w-7xl px-4 pb-24 sm:px-6">
+    <ul class="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        rest.map((post) => (
+          <li>
+            <a href={`/journal/${post.id}`} class="group block">
+              <div class="img-frame overflow-hidden rounded-xl">
+                {post.data.cover ? (
+                  <img src={post.data.cover} alt="" width="480" height="270" loading="lazy" class="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-103" />
+                ) : (
+                  <div class="flex aspect-video w-full items-center justify-center bg-(--color-cacao-900)"><span class="pct text-5xl text-(--color-ember-bright)">D.</span></div>
+                )}
+              </div>
+              <p class="kicker mt-4 mb-2">{fmt(post.data.date)}</p>
+              <h2 class="font-display text-xl leading-snug font-medium group-hover:underline underline-offset-4 decoration-(--color-ember-bright)">{post.data.title}</h2>
+              <p class="mt-2 line-clamp-2 text-sm text-(--color-cream-dim)">{post.data.excerpt}</p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>

@@ -1,0 +1,104 @@
+---
+import Base from '../layouts/Base.astro';
+import Pic from '../components/Pic.astro';
+import experiences from '../data/experiences.json';
+import { SITE } from '../lib/site';
+
+const tour = experiences[0];
+
+const eventLd = tour.dates.map((d) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: tour.name,
+  description: tour.description,
+  startDate: d.date,
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  location: {
+    '@type': 'Place',
+    name: 'Darkins Studio',
+    address: { '@type': 'PostalAddress', streetAddress: '2nd Floor, B-108, Pocket B, Okhla Phase I', addressLocality: 'New Delhi', postalCode: '110020', addressCountry: 'IN' },
+  },
+  offers: {
+    '@type': 'Offer',
+    price: tour.price,
+    priceCurrency: 'INR',
+    url: `${SITE.domain}/experiences`,
+    availability: 'https://schema.org/InStock',
+  },
+  organizer: { '@type': 'Organization', name: SITE.name, url: SITE.domain },
+}));
+---
+
+<Base
+  title="Factory Tours & Experiences — Darkins Chocolates"
+  description="Book the Darkins bean-to-bar factory tour in Delhi: handle Indian cacao beans, watch a live temper, and taste six chocolates with the makers. ₹1600 per person."
+  ogImage={`${tour.images[0].base}-960w.webp`}
+  jsonLd={eventLd}
+>
+  <header class="mx-auto max-w-7xl px-4 pt-20 pb-12 sm:px-6 lg:pt-28">
+    <p class="kicker mb-4">Experiences</p>
+    <h1 class="display max-w-4xl">Two hours inside a chocolate factory.</h1>
+    <p class="prose-dark mt-7 max-w-xl text-lg">{tour.tagline}</p>
+  </header>
+
+  <section class="mx-auto grid max-w-7xl gap-10 px-4 pb-20 sm:px-6 lg:grid-cols-[7fr_5fr] lg:gap-16">
+    <div>
+      <div class="img-frame overflow-hidden rounded-2xl">
+        <Pic img={tour.images[0]} sizes="(min-width: 1024px) 55vw, 100vw" loading="eager" fetchpriority="high" class="aspect-4/3 w-full object-cover" />
+      </div>
+      <div class="mt-3 grid grid-cols-2 gap-3">
+        {
+          tour.images.slice(1).map((img) => (
+            <div class="img-frame overflow-hidden rounded-xl">
+              <Pic img={img} sizes="30vw" class="aspect-4/3 w-full object-cover" />
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="prose-dark mt-10 space-y-4">
+        <p>{tour.description}</p>
+      </div>
+
+      <ol class="mt-10 space-y-0">
+        {
+          tour.itinerary.map((it, i) => (
+            <li class="reveal grid grid-cols-[3.5rem_1fr] gap-4 border-t hairline py-6">
+              <span class="pct text-4xl text-(--color-ember-bright)">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h2 class="font-display text-xl font-medium">
+                  {it.title} <span class="ml-2 text-sm font-normal text-(--color-cream-faint)">{it.duration}</span>
+                </h2>
+                <p class="mt-1.5 text-sm text-(--color-cream-dim)">{it.detail}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <!-- booking card -->
+    <aside class="h-fit rounded-2xl border hairline bg-(--color-cacao-900) p-7 lg:sticky lg:top-24">
+      <p class="kicker mb-4" style="color: var(--color-gold)">Upcoming dates</p>
+      {
+        tour.dates.map((d) => (
+          <p class="border-b hairline pb-4 font-display text-2xl font-medium">
+            {d.label}
+            <span class="mt-1 block text-sm font-normal text-(--color-cream-dim)">{d.time} · {tour.duration}</span>
+          </p>
+        ))
+      }
+      <p class="mt-5 text-3xl font-semibold">₹{tour.price} <span class="text-sm font-normal text-(--color-cream-faint)">{tour.priceNote}</span></p>
+      <p class="mt-4 text-sm text-(--color-cream-dim)">{tour.venue}</p>
+      <a href={tour.booking.url} target="_blank" rel="noopener" data-retailer="whatsapp" class="btn btn-primary mt-7 w-full px-7 py-4">
+        {tour.booking.label}
+      </a>
+      <p class="mt-3 text-center text-xs text-(--color-cream-faint)">
+        or call <a href={`tel:${tour.booking.phone.replace(/ /g, '')}`} class="underline underline-offset-2">{tour.booking.phone}</a>
+      </p>
+      <p class="mt-6 border-t hairline pt-5 text-xs text-(--color-cream-faint)">
+        Private groups, birthdays, team outings — <a href="/contact" class="underline underline-offset-2">write to us</a> and we'll set up a date.
+      </p>
+    </aside>
+  </section>
+</Base>

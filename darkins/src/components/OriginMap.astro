@@ -1,0 +1,65 @@
+---
+// Stylized map-style graphic of India: three cacao origins + the Delhi studio.
+// Deliberately abstract (dotted coastline look), not a geographic-accuracy map.
+const origins = [
+  { x: 148, y: 330, name: 'Puttur, Karnataka', pct: '80%' },
+  { x: 178, y: 392, name: 'Pollachi, Tamil Nadu', pct: '55%' },
+  { x: 238, y: 302, name: 'Eluru, Andhra Pradesh', pct: '70 · 95%' },
+];
+---
+
+<figure class="relative mx-auto w-full max-w-md" role="img" aria-label="Map of India showing Darkins cacao origins in Puttur (Karnataka), Pollachi (Tamil Nadu) and Eluru (Andhra Pradesh), and the studio in Delhi.">
+  <svg viewBox="0 0 400 460" fill="none" class="w-full">
+    <!-- stylized India silhouette -->
+    <path
+      d="M196 18
+         L232 34 L252 60 L282 74 L316 70 L342 88 L352 116 L332 132 L306 128 L286 142
+         L296 168 L282 196 L262 210 L268 238 L252 262 L258 286 L244 306 L236 330
+         L222 356 L210 384 L198 412 L190 434 L182 410 L170 386 L158 356 L146 330
+         L136 302 L124 274 L112 248 L100 224 L84 210 L60 202 L46 186 L64 172
+         L88 176 L104 162 L96 138 L110 118 L132 104 L142 82 L160 62 L172 40 Z"
+      stroke="var(--color-cream-faint)"
+      stroke-width="1.5"
+      stroke-dasharray="3 5"
+      stroke-linecap="round"
+    />
+    <!-- Delhi studio -->
+    <g>
+      <path d="M186 112 l4 8 9 1 -6.5 6 1.5 9 -8 -4.5 -8 4.5 1.5 -9 -6.5 -6 9 -1 Z" fill="var(--color-gold)" />
+      <text x="204" y="124" font-size="13" fill="var(--color-cream)" font-family="var(--font-sans)" font-weight="600">Delhi — the studio</text>
+    </g>
+    {
+      origins.map((o) => (
+        <g>
+          <circle cx={o.x} cy={o.y} r="5" fill="var(--color-ember-bright)" />
+          <circle cx={o.x} cy={o.y} r="11" stroke="var(--color-ember-bright)" stroke-opacity="0.35" class="origin-pulse" />
+        </g>
+      ))
+    }
+  </svg>
+  <figcaption class="mt-4 space-y-1.5">
+    {
+      origins.map((o) => (
+        <p class="flex items-baseline justify-between gap-4 border-b hairline pb-1.5 text-sm">
+          <span class="text-(--color-cream)">{o.name}</span>
+          <span class="pct text-(--color-ember-bright)">{o.pct}</span>
+        </p>
+      ))
+    }
+  </figcaption>
+</figure>
+
+<style>
+  .origin-pulse {
+    animation: pulse 2.6s ease-out infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.6); opacity: 1; }
+    70%, 100% { transform: scale(1.5); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .origin-pulse { animation: none; }
+  }
+</style>

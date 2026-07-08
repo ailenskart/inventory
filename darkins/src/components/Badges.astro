@@ -1,0 +1,21 @@
+---
+interface Props {
+  badges: string[];
+  class?: string;
+}
+const { badges, class: cls } = Astro.props;
+const tone = (b: string) =>
+  b === 'Bestseller' ? 'border-(--color-ember-soft)/60 text-(--color-ember-soft)'
+  : b === 'Seasonal' || b === 'Collab' ? 'border-(--color-gold)/60 text-(--color-gold)'
+  : 'border-(--color-cream)/25 text-(--color-cream-dim)';
+---
+
+{
+  badges.length > 0 && (
+    <ul class={`flex flex-wrap gap-1.5 ${cls ?? ''}`}>
+      {badges.map((b) => (
+        <li class={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.08em] uppercase ${tone(b)}`}>{b}</li>
+      ))}
+    </ul>
+  )
+}

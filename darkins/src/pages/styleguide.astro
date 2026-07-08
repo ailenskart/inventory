@@ -1,0 +1,94 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import BuyButtons from '../components/BuyButtons.astro';
+import Badges from '../components/Badges.astro';
+import productsData from '../data/products.json';
+import type { Product } from '../lib/site';
+
+const products = productsData as unknown as Product[];
+const sample = products.find((p) => p.id === '70-dark-chocolate-with-blueberries')!;
+
+const colors = [
+  ['cacao-950', '#140d0a', 'Page background'],
+  ['cacao-900', '#1e1410', 'Surfaces, cards'],
+  ['cacao-800', '#2e2018', 'Raised surfaces'],
+  ['cream', '#f4ede4', 'Primary text / paper sections'],
+  ['cream-dim', '#cbbead', 'Secondary text'],
+  ['cream-faint', '#a3947f', 'Tertiary text, kickers'],
+  ['ember', '#9e2b20', 'CTAs (evolved from brand #86231f)'],
+  ['ember-bright', '#c0442f', 'Hover, numerals on dark'],
+  ['gold', '#c8a24b', 'Gifting micro-accents'],
+] as const;
+---
+
+<Base title="Styleguide — Darkins Chocolates" description="Design tokens, type scale and components for darkins.com.">
+  <div class="mx-auto max-w-7xl space-y-20 px-4 py-16 sm:px-6">
+    <header>
+      <p class="kicker mb-3">Internal</p>
+      <h1 class="display-sm">Styleguide</h1>
+      <p class="prose-dark mt-4">Tokens and components behind darkins.com. Concept: <em>Dark, Indian, Honest.</em></p>
+    </header>
+
+    <section>
+      <h2 class="kicker mb-6">Palette</h2>
+      <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        {
+          colors.map(([name, hex, use]) => (
+            <li>
+              <div class="h-20 rounded-xl border hairline" style={`background:${hex}`} />
+              <p class="mt-2 text-sm font-semibold">{name}</p>
+              <p class="text-xs text-(--color-cream-faint)">{hex} · {use}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="kicker mb-6">Type scale — Fraunces × Inter</h2>
+      <div class="space-y-8 border-t hairline pt-8">
+        <p class="display">Display / Fraunces 540</p>
+        <p class="display-sm">Display small / section titles</p>
+        <p class="font-display text-2xl font-medium">Card title / Fraunces 500 24</p>
+        <p class="text-lg text-(--color-cream-dim)">Lede / Inter 400 18 — Grown in India. Ground in Delhi. Gone in minutes.</p>
+        <p class="text-base text-(--color-cream-dim)">Body / Inter 400 16 — We turn single-origin Indian cacao into dark chocolate with nothing to hide.</p>
+        <p class="kicker">Kicker / Inter 600 13 · tracked +22%</p>
+        <p><span class="pct text-8xl text-(--color-ember-bright)">70<span class="text-[0.5em]">%</span></span></p>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="kicker mb-6">Buttons</h2>
+      <div class="flex flex-wrap items-center gap-4">
+        <a href="#" class="btn btn-primary">Buy on Amazon</a>
+        <a href="#" class="btn btn-ghost">Order on Blinkit</a>
+        <a href="#" class="btn btn-primary px-7 py-4">Large primary</a>
+        <span class="theme-paper rounded-2xl p-4"><a href="#" class="btn btn-paper">On paper sections</a></span>
+      </div>
+      <div class="mt-6"><BuyButtons links={sample.buyLinks} size="lg" /></div>
+    </section>
+
+    <section>
+      <h2 class="kicker mb-6">Badges</h2>
+      <Badges badges={['Bestseller', 'Single Origin', 'Sugarfree', 'Mylk', 'Collab', 'Seasonal', 'Pro']} />
+    </section>
+
+    <section>
+      <h2 class="kicker mb-6">Product card (hover: image swap + tasting notes)</h2>
+      <div class="grid grid-cols-2 gap-6 lg:grid-cols-4">
+        <ProductCard product={sample} />
+        <ProductCard product={products.find((p) => p.id === '95-single-origin-dark-chocolate-andhra')!} />
+      </div>
+    </section>
+
+    <section>
+      <h2 class="kicker mb-6">Filter chips</h2>
+      <div class="flex flex-wrap gap-2">
+        <input type="radio" name="sg" id="sg-1" class="sr-radio" checked /><label for="sg-1" class="filter-chip">All</label>
+        <input type="radio" name="sg" id="sg-2" class="sr-radio" /><label for="sg-2" class="filter-chip">Bars</label>
+        <input type="radio" name="sg" id="sg-3" class="sr-radio" /><label for="sg-3" class="filter-chip">Tasting packs</label>
+      </div>
+    </section>
+  </div>
+</Base>

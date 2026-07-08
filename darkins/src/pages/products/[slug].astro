@@ -1,0 +1,203 @@
+---
+import Base from '../../layouts/Base.astro';
+import Pic from '../../components/Pic.astro';
+import Badges from '../../components/Badges.astro';
+import BuyButtons from '../../components/BuyButtons.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import productsData from '../../data/products.json';
+import type { Product } from '../../lib/site';
+import { CATEGORIES, SITE, largestSrc } from '../../lib/site';
+
+export function getStaticPaths() {
+  return (productsData as unknown as Product[]).map((p) => ({ params: { slug: p.id } }));
+}
+
+const products = productsData as unknown as Product[];
+const p = products.find((x) => x.id === Astro.params.slug)!;
+
+const gallery = p.images.filter((i) => i.role === 'packshot' || i.role === 'lifestyle');
+const labels = p.images.filter((i) => i.role === 'nutrition' || i.role === 'values');
+
+const related = products
+  .filter((x) => x.id !== p.id)
+  .sort((a, b) => Number(b.category === p.category) - Number(a.category === p.category))
+  .slice(0, 4);
+
+const dietBadges = [
+  'Bean-to-Bar',
+  ...(p.vegan ? ['Vegan'] : []),
+  ...(p.glutenFree ? ['Gluten-free'] : []),
+  ...(p.sugarfree ? ['Sugarfree'] : []),
+];
+
+const productLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.name,
+  description: p.description,
+  image: p.images.map((i) => new URL(largestSrc(i), SITE.domain).href),
+  brand: { '@type': 'Brand', name: 'Darkins Chocolates' },
+  category: CATEGORIES[p.category],
+  ...(p.weight ? { weight: { '@type': 'QuantitativeValue', value: p.weight } } : {}),
+  offers: p.buyLinks
+    .filter((l) => l.retailer !== 'whatsapp')
+    .map((l) => ({
+      '@type': 'Offer',
+      url: l.url,
+      priceCurrency: 'INR',
+      price: p.mrp,
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: l.retailer === 'amazon' ? 'Amazon India' : 'Blinkit' },
+    })),
+};
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.domain },
+    { '@type': 'ListItem', position: 2, name: 'Products', item: `${SITE.domain}/products` },
+    { '@type': 'ListItem', position: 3, name: p.name, item: `${SITE.domain}/products/${p.id}` },
+  ],
+};
+
+// Flavor bars: deterministic pseudo-weights so each note renders at a
+// different length — a visual, not a measurement.
+const noteWidth = (i: number, total: number) => 88 - i * Math.max(12, 34 / total) - (p.id.length % 7);
+---
+
+<Base
+  title={`${p.name} — Darkins Chocolates`}
+  description={p.description}
+  ogImage={gallery[0] ? largestSrc(gallery[0]) : undefined}
+  jsonLd={[productLd, breadcrumbLd]}
+>
+  <nav aria-label="Breadcrumb" class="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+    <ol class="flex flex-wrap gap-1 text-sm text-(--color-cream-faint)">
+      <li><a href="/" class="hover:text-(--color-cream)">Home</a> /</li>
+      <li><a href="/products" class="hover:text-(--color-cream)">Products</a> /</li>
+      <li><a href={`/products?category=${p.category}`} class="hover:text-(--color-cream)">{CATEGORIES[p.category]}</a></li>
+    </ol>
+  </nav>
+
+  <article class="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:py-14">
+    <!-- gallery -->
+    <div>
+      <div class="img-frame relative overflow-hidden rounded-2xl">
+        {gallery[0] && <Pic img={gallery[0]} alt={p.name} sizes="(min-width: 1024px) 45vw, 100vw" loading="eager" fetchpriority="high" class="aspect-square w-full object-cover" />}
+        {
+          p.cacaoPercent != null && (
+            <span aria-hidden="true" class="pct pointer-events-none absolute -bottom-3 left-3 text-[clamp(5rem,10vw,8rem)] text-(--color-cream) drop-shadow-[0_2px_16px_rgba(20,13,10,0.85)]">
+              {p.cacaoPercent}<span class="text-[0.5em]">%</span>
+            </span>
+          )
+        }
+      </div>
+      {
+        gallery.length > 1 && (
+          <div class="mt-3 grid grid-cols-3 gap-3">
+            {gallery.slice(1, 4).map((img) => (
+              <div class="img-frame overflow-hidden rounded-xl">
+                <Pic img={img} sizes="20vw" class="aspect-square w-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+
+    <!-- details -->
+    <div>
+      <Badges badges={p.badges} class="mb-3" />
+      <h1 class="display-sm">{p.name}</h1>
+      <p class="mt-3 text-(--color-cream-faint)">
+        {p.weight && <span>{p.weight} · </span>}MRP ₹{p.mrp}
+        <span class="text-xs"> (reference — prices are set by retailers)</span>
+      </p>
+
+      <p class="prose-dark mt-6 text-lg">{p.description}</p>
+
+      {
+        p.origin && (
+          <p class="mt-4 text-sm text-(--color-cream-dim)">
+            <strong class="text-(--color-cream)">Origin:</strong> {p.origin}
+            {p.roast && <> · <strong class="text-(--color-cream)">Roast:</strong> {p.roast}</>}
+          </p>
+        )
+      }
+
+      <BuyButtons links={p.buyLinks} size="lg" class="mt-8" />
+      <p class="mt-3 text-xs text-(--color-cream-faint)">
+        Also stocked by <a href="/#where-to-buy" data-open-panel class="underline underline-offset-2">Zepto, BigBasket, Urban Platter and more</a>.
+      </p>
+
+      <!-- tasting notes, visualized -->
+      <section class="mt-10" aria-label="Tasting notes">
+        <h2 class="kicker mb-4">Tasting notes</h2>
+        <ul class="space-y-3">
+          {
+            p.tastingNotes.map((note, i) => (
+              <li class="grid grid-cols-[7.5rem_1fr] items-center gap-4">
+                <span class="text-sm font-medium capitalize">{note}</span>
+                <span class="h-1.5 overflow-hidden rounded-full bg-(--color-cream)/10">
+                  <span class="reveal-bar block h-full rounded-full bg-linear-to-r from-(--color-ember) to-(--color-ember-bright)" style={`width:${noteWidth(i, p.tastingNotes.length)}%`} />
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      {
+        p.contents && (
+          <section class="mt-10" aria-label="What's inside">
+            <h2 class="kicker mb-4">Inside the box</h2>
+            <ul class="space-y-2 text-sm text-(--color-cream-dim)">
+              {p.contents.map((c) => (
+                <li class="border-b hairline pb-2">{c}</li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      {
+        p.ingredients.length > 0 && (
+          <section class="mt-10" aria-label="Ingredients">
+            <h2 class="kicker mb-4">Ingredients</h2>
+            <p class="text-sm text-(--color-cream-dim)">{p.ingredients.join(' · ')}</p>
+          </section>
+        )
+      }
+
+      <ul class="mt-10 flex flex-wrap gap-2" aria-label="Product attributes">
+        {
+          dietBadges.map((b) => (
+            <li class="rounded-full bg-(--color-cacao-800) px-3.5 py-1.5 text-xs font-semibold tracking-wide text-(--color-cream-dim)">{b}</li>
+          ))
+        }
+      </ul>
+    </div>
+  </article>
+
+  {
+    labels.length > 0 && (
+      <section class="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+        <h2 class="kicker mb-4">The fine print, photographed</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:max-w-3xl">
+          {labels.map((img) => (
+            <div class="img-frame overflow-hidden rounded-xl">
+              <Pic img={img} sizes="(min-width: 640px) 30vw, 100vw" class="w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="mx-auto max-w-7xl border-t hairline px-4 py-14 sm:px-6">
+    <h2 class="font-display mb-8 text-3xl font-medium">You might also like</h2>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4 lg:gap-x-6">
+      {related.map((r) => <ProductCard product={r} />)}
+    </div>
+  </section>
+</Base>

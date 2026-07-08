@@ -1,0 +1,27 @@
+---
+// Responsive <img> from a {base, widths} record in the data files.
+interface Props {
+  img: { base: string; widths: number[]; width?: number | null; height?: number | null; alt?: string };
+  alt?: string;
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'auto';
+  class?: string;
+}
+const { img, alt, sizes = '(min-width: 768px) 50vw, 100vw', loading = 'lazy', fetchpriority = 'auto', class: cls } = Astro.props;
+const srcset = img.widths.map((w) => `${img.base}-${w}w.webp ${w}w`).join(', ');
+const mid = img.widths.includes(960) ? 960 : Math.max(...img.widths);
+---
+
+<img
+  src={`${img.base}-${mid}w.webp`}
+  srcset={srcset}
+  sizes={sizes}
+  alt={alt ?? img.alt ?? ''}
+  width={img.width ?? undefined}
+  height={img.height ?? undefined}
+  loading={loading}
+  decoding={loading === 'eager' ? 'sync' : 'async'}
+  fetchpriority={fetchpriority}
+  class={cls}
+/>

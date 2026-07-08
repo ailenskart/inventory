@@ -1,0 +1,165 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../lib/site';
+
+// The 11 steps, rewritten from darkins.in/pages/bean-to-bar — facts kept,
+// typos and passive voice retired.
+const steps = [
+  {
+    n: '01', title: 'Harvesting', where: 'On the farm',
+    body: [
+      'Ripe cacao pods come off the trees twice a year and are split open with machetes. Inside: white pulp cradling the beans.',
+      'Soil, weather and geography are already writing the bar’s flavour before we ever touch it. No two harvests taste the same — that’s the point.',
+    ],
+  },
+  {
+    n: '02', title: 'Fermenting', where: 'On the farm',
+    body: [
+      'Pulp and beans rest in large wooden boxes for seven days, turned twice so the wild fermentation runs even.',
+      'The beans go in purple and come out reddish — the first flavour development of the chocolate, and the reason a farmer’s skill ends up on your tongue.',
+    ],
+  },
+  {
+    n: '03', title: 'Drying', where: 'On the farm',
+    body: [
+      'The beans spread out in a single layer on bamboo tables and dry in the sun for five to ten days.',
+      'Full aeration, zero residual moisture — anything less invites mould. Only then do they go into sacks.',
+    ],
+  },
+  {
+    n: '04', title: 'Transportation', where: 'Farm → Delhi',
+    body: [
+      'The sacks travel to Delhi and sit open for a week to air out.',
+      'From here, everything happens in our studio.',
+    ],
+  },
+  {
+    n: '05', title: 'Sorting', where: 'The studio',
+    body: [
+      'Flat beans, broken beans, mouldy beans, half-germinated beans, dust, stray stones — none of it makes the cut.',
+      'Only fully formed, fully fermented, fully dried cacao goes into a Darkins bar. Sorted by hand, bean by bean.',
+    ],
+  },
+  {
+    n: '06', title: 'Roasting', where: 'The studio',
+    body: [
+      'We roast in standard ovens and rotate the beans by hand for evenness — the hot climate that grows great cacao makes roasting it harder.',
+      'Time and temperature change with every batch, worked out by careful experiment and a lot of tasting.',
+    ],
+  },
+  {
+    n: '07', title: 'Cracking & Winnowing', where: 'The studio',
+    body: [
+      'Roasted beans wear a thin, papery shell. We crack them open and let fans blow the husk away, leaving pure nibs.',
+      'The shells brew into a delicate cocoa tea. The nibs are intense — eat one and you can already taste the finished bar.',
+    ],
+  },
+  {
+    n: '08', title: 'Grinding & Conching', where: 'The studio',
+    body: [
+      'Two granite wheels in a melanger grind the nibs into liquid cocoa mass — cocoa solids and cocoa butter, chocolate in its purest form.',
+      'Sugar goes in here, and the wheels keep turning for more than twelve hours. Particle size drops, chemistry shifts. This step decides the flavour notes more than any other.',
+    ],
+  },
+  {
+    n: '09', title: 'Tempering', where: 'The studio',
+    body: [
+      'Shine and snap come from crystals — the right ones. We raise, lower and raise the temperature with machine precision until the cocoa butter sets exactly as it should.',
+      'Skip it and chocolate turns soft, crumbly and dull on the tongue. We don’t skip it.',
+    ],
+  },
+  {
+    n: '10', title: 'Moulding', where: 'The studio',
+    body: [
+      'Tempered chocolate is poured by hand into polycarbonate moulds and agitated until the air bubbles give up.',
+      'The moulds score each bar so a square breaks off clean — a click, every time.',
+    ],
+  },
+  {
+    n: '11', title: 'Wrapping', where: 'The studio',
+    body: [
+      'Bars cool at 14°C, get wrapped in foil and boxed resealable.',
+      'Every single bar is wrapped entirely by hand before it leaves the studio. Then it’s yours.',
+    ],
+  },
+];
+
+const howToLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How Darkins makes bean-to-bar chocolate',
+  description: 'The 11-step bean-to-bar process behind every Darkins chocolate bar, from harvesting Indian cacao to hand-wrapping in the Delhi studio.',
+  step: steps.map((s) => ({
+    '@type': 'HowToStep',
+    position: Number(s.n),
+    name: s.title,
+    text: s.body.join(' '),
+  })),
+};
+---
+
+<Base
+  title="Bean to Bar — the 11-step process — Darkins Chocolates"
+  description="From cacao pod to wrapped bar in eleven honest steps: harvesting, fermenting, drying, sorting, roasting, winnowing, grinding, tempering, moulding and hand-wrapping — all in the Darkins Delhi studio."
+  theme="paper"
+  jsonLd={[howToLd]}
+>
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  <header class="mx-auto max-w-7xl px-4 pt-20 pb-16 sm:px-6 lg:pt-28">
+    <p class="kicker mb-4">The process</p>
+    <h1 class="display max-w-4xl">From a pod on a tree to a bar in your hand.</h1>
+    <p class="mt-8 max-w-xl text-lg text-(--color-cacao-700)">
+      Eleven steps. About a week, beans to bar. Most chocolatiers melt someone else's chocolate;
+      we start with the bean — every roast, crack, grind and temper happens in our Delhi
+      micro-factory.
+    </p>
+  </header>
+
+  <ol class="mx-auto max-w-7xl px-4 pb-24 sm:px-6">
+    {
+      steps.map((s, i) => (
+        <li class={`grid gap-6 border-t border-(--color-cacao-950)/15 py-14 md:grid-cols-[1fr_2fr] md:gap-14 lg:py-20 ${i % 2 ? 'md:[&>div:first-child]:order-last' : ''}`}>
+          <div class="relative">
+            <div class="md:sticky md:top-28">
+              <span class="pct block text-[clamp(5rem,12vw,9rem)] leading-none text-(--color-ember-deep)">{s.n}</span>
+              <p class="kicker mt-3">{s.where}</p>
+            </div>
+          </div>
+          <div class="reveal max-w-2xl">
+            <h2 class="display-sm">{s.title}</h2>
+            {s.body.map((para) => (
+              <p class="mt-5 text-lg leading-relaxed text-(--color-cacao-700)">{para}</p>
+            ))}
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+
+  <section class="section-dark bg-(--color-cacao-950) text-(--color-cream)">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-8 px-4 py-16 sm:px-6 lg:py-20">
+      <div>
+        <p class="kicker mb-3">Taste the result</p>
+        <h2 class="display-sm">Now try the homework.</h2>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a href="/products" class="btn btn-primary px-7 py-4">Browse the bars</a>
+        <a href="/experiences" class="btn btn-ghost px-7 py-4">See it live — book a tour</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Progress bar fallback for browsers without CSS scroll-driven animations.
+  const bar = document.querySelector<HTMLElement>('.scroll-progress');
+  if (bar && !CSS.supports('animation-timeline: scroll()')) {
+    const onScroll = () => {
+      const h = document.documentElement;
+      bar.style.transform = `scaleX(${h.scrollTop / (h.scrollHeight - h.clientHeight)})`;
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+</script>

@@ -1,0 +1,168 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../lib/site';
+
+const faqs = [
+  {
+    q: 'What is bean-to-bar chocolate?',
+    a: 'Chocolate made straight from the cocoa bean. Most chocolatiers buy bulk chocolate and melt it down; we roast, winnow, grind, conche and temper everything ourselves in our micro-factory.',
+  },
+  {
+    q: 'Why Indian cacao in particular?',
+    a: 'Because it deserves the spotlight. Indian cacao barely exists in the world of single-origin chocolate — we set out to change that, and to bring it to a world-class level.',
+  },
+  {
+    q: 'Is your chocolate gluten-free? Any additives?',
+    a: 'Everything we make is gluten-free. Our signature dark chocolate has three ingredients: cocoa beans, organic sugar and cacao butter. No lecithin, no vanilla, no additives — where a bar has extras (coffee, blueberry), they’re real and on the label.',
+  },
+  {
+    q: 'Is it certified organic?',
+    a: 'Unofficially organic. Our farmers shade-grow and intercrop without chemicals or pesticides, and every sack is traceable to its origin — but certification is expensive and our small farms can’t carry that cost. We’d rather pay farmers than certifiers.',
+  },
+  {
+    q: 'How long does the process take?',
+    a: 'About four days from whole beans to finished chocolate — a week to ten days counting moulding and packaging.',
+  },
+  {
+    q: 'How should I store it?',
+    a: 'Cool room temperature (15–18°C), wrapped well, away from strong smells. Not the fridge — condensation blooms the sugar and clouds the surface. Best within 12 months; there are no preservatives.',
+  },
+  {
+    q: 'Wholesale and custom orders?',
+    a: `Three to four weeks lead time — everything is handmade to order and packaging is often customised. Write to ${SITE.email} or use the contact page.`,
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+
+const values = [
+  ['Natural', 'Three ingredients where three will do. No fillers, no lecithin, no “unnecessary”.'],
+  ['Vegan', 'Even our mylk bars — coconut milk and cashew stand in for dairy, and nothing is lost.'],
+  ['Gluten-free', 'Everything, always. Not a variant — the default.'],
+  ['Small-batch', 'A micro-factory, standard ovens, granite wheels, and hands on every bar.'],
+] as const;
+---
+
+<Base
+  title="Our Story — Darkins Chocolates"
+  description="How Darkins began: one chef's decade-long chase for real chocolate, a Delhi micro-factory, and the Indian cacao farmers who grow the flavour. Natural, vegan, gluten-free, small-batch."
+  jsonLd={[faqLd]}
+>
+  <header class="mx-auto max-w-7xl px-4 pt-20 pb-14 sm:px-6 lg:pt-28">
+    <p class="kicker mb-4">The story</p>
+    <h1 class="display max-w-4xl">Dark-ins: what happens when you let the dark in.</h1>
+  </header>
+
+  <!-- founder -->
+  <section class="mx-auto grid max-w-7xl gap-10 px-4 pb-16 sm:px-6 lg:grid-cols-[2fr_3fr] lg:gap-16">
+    <figure class="reveal">
+      <div class="img-frame overflow-hidden rounded-2xl">
+        <img
+          src="/images/site/makers-chef-360w.webp"
+          alt="Richa Chaudhary, founder and chef of Darkins Chocolates, at work in the studio"
+          width="360"
+          height="360"
+          loading="eager"
+          class="aspect-square w-full object-cover"
+        />
+      </div>
+      <figcaption class="mt-3 text-sm text-(--color-cream-faint)">Richa Chaudhary — Founder & Chef</figcaption>
+    </figure>
+    <div class="prose-dark space-y-5 text-lg">
+      <p>
+        <strong>It started with one real bar of chocolate in 2004</strong> — and the inconvenient
+        discovery that most of what we call chocolate is sweet flatness. Richa spent the next
+        decade chasing the real thing: a pharmacist by training, a procurement career in
+        hospitality by day, and big, vague chocolate dreams the whole time.
+      </p>
+      <p>
+        In 2015 she quit, and went to learn the craft properly — meeting makers in Taiwan, the UK,
+        Hong Kong and Singapore who coaxed intense, unadulterated chocolate out of raw cacao. The
+        conclusion was obvious and slightly mad: come home, use only Indian cacao, and make only
+        dark chocolate.
+      </p>
+      <p>
+        She trained with Indian chocolate makers — now friends — and built
+        <strong>Darkins</strong>: a chocolate micro-factory in Delhi making dark chocolate free of
+        fillers and unnecessary ingredients, and full of everything else.
+      </p>
+      <p class="font-display text-xl text-(--color-cream) italic">
+        “With gratitude to the people and places that inspired me — may Darkins bring you the same
+        happiness, contentment and adventure.”
+      </p>
+    </div>
+  </section>
+
+  <!-- farms -->
+  <section class="border-y hairline bg-(--color-cacao-900)">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+      <p class="kicker mb-3">The farms</p>
+      <h2 class="display-sm max-w-2xl">The flavour is grown, not added.</h2>
+      <div class="mt-12 grid gap-px overflow-hidden rounded-2xl bg-(--color-cream)/10 md:grid-cols-3">
+        {
+          [
+            ['Puttur', 'Karnataka', 'Banana, vanilla, bread and sage in an 80% bar — Puttur beans are the gentlest heavyweight we know.'],
+            ['Pollachi', 'Tamil Nadu', 'Citrus, lemongrass and pine. Pollachi cacao makes our brightest, most approachable dark.'],
+            ['Eluru', 'Andhra Pradesh', 'Grape, plum, wood and smoke. Coastal Andhra beans carry our 70% and our uncompromising 95% — from a farm run by a matriarch who sets the standard for the region.'],
+          ].map(([place, state, body]) => (
+            <div class="reveal bg-(--color-cacao-900) p-7">
+              <h3 class="font-display text-2xl font-medium">{place}</h3>
+              <p class="kicker mt-1 mb-4">{state}</p>
+              <p class="text-sm text-(--color-cream-dim)">{body}</p>
+            </div>
+          ))
+        }
+      </div>
+      <p class="prose-dark mt-8 max-w-2xl">
+        We buy directly, pay for quality, and visit. The farms shade-grow their cacao and
+        intercrop it with other trees and crops; every sack that reaches Okhla can be traced back
+        to the farm it grew on.
+      </p>
+    </div>
+  </section>
+
+  <!-- values -->
+  <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+    <p class="kicker mb-3">What we won't budge on</p>
+    <h2 class="display-sm">Four promises</h2>
+    <dl class="mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+      {
+        values.map(([term, def]) => (
+          <div class="reveal border-t hairline pt-5">
+            <dt class="font-display text-2xl font-medium">{term}</dt>
+            <dd class="mt-2 text-(--color-cream-dim)">{def}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="border-t hairline scroll-mt-24">
+    <div class="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-24">
+      <p class="kicker mb-3">Asked often</p>
+      <h2 class="display-sm mb-10">Fair questions</h2>
+      <div class="space-y-3">
+        {
+          faqs.map((f) => (
+            <details class="group rounded-xl bg-(--color-cacao-900) px-6 py-4 open:pb-6">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <span class="text-(--color-cream-faint) transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <p class="prose-dark mt-3">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Base>

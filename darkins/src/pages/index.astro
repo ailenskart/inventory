@@ -1,0 +1,191 @@
+---
+import Base from '../layouts/Base.astro';
+import Pic from '../components/Pic.astro';
+import ProductCard from '../components/ProductCard.astro';
+import OriginMap from '../components/OriginMap.astro';
+import productsData from '../data/products.json';
+import experiences from '../data/experiences.json';
+import type { Product } from '../lib/site';
+import { SITE } from '../lib/site';
+
+const products = productsData as unknown as Product[];
+const featured = products.filter((p) => p.featured);
+const heroBar = products.find((p) => p.id === '70-dark-chocolate-with-blueberries')!;
+const hero95 = products.find((p) => p.id === '95-single-origin-dark-chocolate-andhra')!;
+const tastingPacks = products.filter((p) => p.category === 'tasting-packs');
+const gifting = products.filter((p) => p.category === 'gifting');
+const tour = experiences[0];
+
+const processTeaser = [
+  ['06', 'Roasting', 'Time and temperature, re-derived for every batch — by experiment and a lot of tasting.'],
+  ['08', 'Grinding & conching', 'Granite wheels run for twelve-plus hours. This step decides the flavour more than any other.'],
+  ['09', 'Tempering', 'Raise, lower, raise. The right crystals give every bar its shine and its snap.'],
+] as const;
+---
+
+<Base title="Darkins Chocolates — Bean-to-bar chocolate from Indian cacao">
+  <!-- HERO -->
+  <section class="relative overflow-hidden">
+    <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 pt-16 pb-12 sm:px-6 lg:grid-cols-[7fr_5fr] lg:pt-24 lg:pb-20">
+      <div>
+        <p class="kicker rise mb-6">Bean-to-bar · Delhi, India</p>
+        <h1 class="display">
+          <span class="rise block">Grown in India.</span>
+          <span class="rise block text-(--color-ember-bright)" style="animation-delay:90ms">Ground in Delhi.</span>
+          <span class="rise block" style="animation-delay:180ms">Gone in minutes.</span>
+        </h1>
+        <p class="prose-dark rise mt-7 max-w-lg text-lg" style="animation-delay:260ms">
+          We turn single-origin Indian cacao into dark chocolate with nothing to hide —
+          natural, vegan, gluten-free, and made entirely by hand in our micro-factory.
+        </p>
+        <div class="rise mt-9 flex flex-wrap gap-3" style="animation-delay:340ms">
+          <a href="/products" class="btn btn-primary px-7 py-4">Browse the menu</a>
+          <a href="/process" class="btn btn-ghost px-7 py-4">How it's made</a>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="img-frame overflow-hidden rounded-2xl">
+          <Pic img={heroBar.images[0]} alt="70% Dark Chocolate with Blueberries — Darkins' bestselling bar" sizes="(min-width: 1024px) 40vw, 100vw" loading="eager" fetchpriority="high" class="aspect-square w-full object-cover" />
+        </div>
+        <span aria-hidden="true" class="pct absolute -bottom-6 -left-4 text-[clamp(6rem,14vw,10rem)] text-(--color-cream) drop-shadow-[0_4px_24px_rgba(20,13,10,0.9)]">70<span class="text-[0.45em]">%</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANIFESTO MARQUEE -->
+  <div class="marquee border-y hairline py-4" aria-hidden="true">
+    <div class="marquee-track font-display text-xl text-(--color-cream-faint)">
+      {Array(2).fill('Natural · Vegan · Gluten-free · Single Origin · Hand-crafted · No fillers · No shortcuts · ').map((s) => <span>{s}</span>)}
+    </div>
+  </div>
+
+  <!-- FEATURED BARS -->
+  <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+    <div class="mb-10 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="kicker mb-3">The menu</p>
+        <h2 class="display-sm">Bars worth missing<br />a meeting for</h2>
+      </div>
+      <a href="/products" class="btn btn-ghost">All {products.length} products</a>
+    </div>
+    <div class="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-x-6 lg:gap-y-12 lg:overflow-visible lg:px-0">
+      {
+        featured.map((p, i) => (
+          <div class="w-[70vw] shrink-0 snap-start sm:w-[44vw] lg:w-auto">
+            <ProductCard product={p} eager={i < 2} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- PROCESS TEASER -->
+  <section class="border-y hairline bg-(--color-cacao-900)">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+      <p class="kicker mb-3">Bean to bar</p>
+      <h2 class="display-sm mb-12 max-w-xl">Eleven steps. Zero shortcuts.</h2>
+      <div class="grid gap-px overflow-hidden rounded-2xl bg-(--color-cream)/10 md:grid-cols-3">
+        {
+          processTeaser.map(([n, title, body]) => (
+            <div class="reveal bg-(--color-cacao-900) p-7">
+              <span class="pct block text-5xl text-(--color-ember-bright)">{n}</span>
+              <h3 class="font-display mt-4 text-2xl font-medium">{title}</h3>
+              <p class="mt-2 text-sm text-(--color-cream-dim)">{body}</p>
+            </div>
+          ))
+        }
+      </div>
+      <a href="/process" class="btn btn-primary mt-10">Walk the whole line</a>
+    </div>
+  </section>
+
+  <!-- ORIGIN -->
+  <section class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+    <div>
+      <p class="kicker mb-3">Single-origin Indian cacao</p>
+      <h2 class="display-sm">The bean decides.<br />We just listen.</h2>
+      <div class="prose-dark mt-6 space-y-4">
+        <p>
+          Most chocolate erases where it came from. Ours leads with it. Puttur beans taste of
+          banana and warm bread; Pollachi leans citrus and lemongrass; Eluru goes deep — grape,
+          plum, wood. Same three ingredients, three different chocolates.
+        </p>
+        <p>
+          We buy directly from farms that shade-grow and intercrop their cacao, and every sack can
+          be traced back to its origin.
+        </p>
+      </div>
+      <a href="/story" class="btn btn-ghost mt-8">Meet the farms</a>
+    </div>
+    <div class="reveal">
+      <OriginMap />
+    </div>
+  </section>
+
+  <!-- TASTING PACKS + GIFTING -->
+  <section class="border-y hairline bg-(--color-cacao-900)">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
+      <div class="mb-10 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="kicker mb-3" style="color: var(--color-gold)">Tasting packs & gifting</p>
+          <h2 class="display-sm">Five bars, one sitting</h2>
+        </div>
+        <a href="/products?category=tasting-packs" class="btn btn-ghost">All packs</a>
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-12">
+        {[...tastingPacks, gifting.find((g) => g.id === 'premium-artisanal-chocolate-gift-box')!].map((p) => <ProductCard product={p} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- FACTORY TOUR PROMO -->
+  <section class="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[5fr_7fr] lg:py-24">
+    <div class="img-frame reveal order-last overflow-hidden rounded-2xl lg:order-first">
+      <Pic img={tour.images[0]} sizes="(min-width: 1024px) 40vw, 100vw" class="aspect-4/3 w-full object-cover" />
+    </div>
+    <div>
+      <p class="kicker mb-3">Experiences</p>
+      <h2 class="display-sm">Come smell the roast</h2>
+      <p class="prose-dark mt-6">
+        {tour.tagline} Two hours in the Okhla studio: beans in your hands, a live temper, six
+        chocolates tasted properly, and your questions answered by the people who made them.
+      </p>
+      <p class="mt-6 font-display text-xl">
+        Next tour: <span class="text-(--color-gold)">{tour.dates[0].label}</span> · ₹{tour.price} {tour.priceNote}
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/experiences" class="btn btn-primary">Tour details</a>
+        <a href={tour.booking.url} target="_blank" rel="noopener" data-retailer="whatsapp" class="btn btn-ghost">{tour.booking.label}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL STRIP -->
+  <section class="border-t hairline">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="kicker mb-3">@darkinschocolate</p>
+          <h2 class="font-display text-3xl font-medium">From the studio floor</h2>
+        </div>
+        <a href={SITE.social.instagram} target="_blank" rel="noopener" class="btn btn-ghost">Follow on Instagram</a>
+      </div>
+      <ul class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {
+          [
+            products.find((p) => p.id === '63-artisanal-dark-chocolate-with-paan')!.images[1] ?? products.find((p) => p.id === '63-artisanal-dark-chocolate-with-paan')!.images[0],
+            hero95.images[1] ?? hero95.images[0],
+            tour.images[1],
+            products.find((p) => p.id === 'mylk-chocolate-with-pineapple-paprika')!.images[0],
+          ].map((img) => (
+            <li>
+              <a href={SITE.social.instagram} target="_blank" rel="noopener" class="img-frame group block overflow-hidden rounded-xl" aria-label="Open the Darkins Instagram profile">
+                <Pic img={img} alt="" sizes="(min-width: 640px) 25vw, 50vw" class="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</Base>
